@@ -8,8 +8,7 @@ type Props = {
 };
 
 export default async function ConsultaQrPage({ searchParams }: Props) {
-  const user = await requireModule("consulta_qr");
-  const isEncargado = user.rol === "ENCARGADO";
+  await requireModule("consulta_qr");
   const params = await searchParams;
   const selectedCode = params.codigo;
   const autoStart = params.autostart === "1";
@@ -24,7 +23,6 @@ export default async function ConsultaQrPage({ searchParams }: Props) {
       <PageHeader title="Consulta QR" />
       <ConsultaQrCard
         equipos={equipos}
-        showEncargadoHint={isEncargado}
         initialCode={selectedCode}
         autoStart={autoStart}
       />

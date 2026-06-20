@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useTransition } from "react";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { Button } from "@/components/ui/button";
 import { AsyncContent } from "@/components/ui/loading";
 import { usePendingRouter } from "@/hooks/use-pending-router";
@@ -86,12 +86,13 @@ export function ProcedimientoEjecucion({
             Aplica a: {labelTipoEquipoProcedimiento(procedimiento.tipoEquipo)}
           </p>
         </div>
-        <Link
+        <PendingNavTextLink
           href={`/procedimientos?id=${procedimiento.id}`}
+          loadingText="Abriendo..."
           className="text-sm font-medium text-[#2563EB] hover:underline"
         >
           Ver plantilla
-        </Link>
+        </PendingNavTextLink>
       </div>
 
       {!tipoOk ? (

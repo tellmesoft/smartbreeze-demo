@@ -1,12 +1,10 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { ConsultaQrCard } from "@/components/consulta/consulta-qr-card";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireModule } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  canUseConsultaQr,
   equiposScopeForRole,
   mantenimientosScopeForRole,
 } from "@/lib/permissions";
@@ -53,7 +51,6 @@ export default async function DashboardPage() {
     alertasAbiertas,
     proximosMantenimientos,
     alertasRecientes,
-    equiposConsulta,
     proximosVencimientos,
     equiposPorEstadoRaw,
   ] = await Promise.all([
@@ -85,10 +82,6 @@ export default async function DashboardPage() {
       include: { equipo: true },
       orderBy: { fecha: "desc" },
       take: 5,
-    }),
-    prisma.equipo.findMany({
-      select: { codigoQr: true, codigoInterno: true, nombre: true },
-      orderBy: { codigoInterno: "asc" },
     }),
     prisma.equipo.findMany({
       where: {
@@ -145,12 +138,6 @@ export default async function DashboardPage() {
       <PageHeader
         title={isEncargado ? "Panel de consulta" : "Panel operativo"}
       />
-
-      {isEncargado ? (
-        <div className="mb-6">
-          <ConsultaQrCard equipos={equiposConsulta} showEncargadoHint />
-        </div>
-      ) : null}
 
       <div
         className={`grid gap-4 sm:grid-cols-2 ${isEncargado ? "max-w-sm" : "xl:grid-cols-5"}`}
@@ -252,20 +239,18 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {canUseConsultaQr(user.rol) && !isEncargado ? (
-        <div className="mt-6">
-          <ConsultaQrCard equipos={equiposConsulta} />
-        </div>
-      ) : null}
-
       {isAdmin ? (
         <Card className="mt-6">
           <CardContent className="py-5">
             <p className="text-sm text-gray-600">
               Accedé al módulo de reportes para ver gráficos consolidados del estado operativo.{" "}
-              <Link href="/reportes" className="font-medium text-[#2563EB] hover:underline">
+              <PendingNavTextLink
+                href="/reportes"
+                loadingText="Abriendo..."
+                className="font-medium text-[#2563EB] hover:underline"
+              >
                 Ir a reportes
-              </Link>
+              </PendingNavTextLink>
             </p>
           </CardContent>
         </Card>

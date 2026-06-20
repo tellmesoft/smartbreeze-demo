@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { MapPin, Wind } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { UbicacionEquipoNavLink } from "@/components/ubicaciones/ubicacion-equipo-nav-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { estadoEquipoLabels } from "@/lib/navigation";
-import { estadoEquipoVariant } from "@/lib/status-badges";
 import { base64ToDataUrl } from "@/lib/utils";
 import type { EstadoEquipo } from "@/generated/prisma/client";
 
@@ -117,21 +115,12 @@ export function UbicacionDetail({ ubicacion }: { ubicacion: UbicacionDetailData 
             <ul className="divide-y divide-gray-100">
               {ubicacion.equipos.map((equipo) => (
                 <li key={equipo.id}>
-                  <Link
-                    href={`/equipos/${equipo.id}`}
-                    className="flex items-center justify-between gap-3 py-3 hover:bg-gray-50"
-                  >
-                    <span className="flex items-center gap-2 text-sm">
-                      <Wind className="h-4 w-4 text-gray-400" />
-                      <span>
-                        <span className="font-medium text-gray-900">{equipo.nombre}</span>
-                        <span className="ml-2 text-gray-400">{equipo.codigoInterno}</span>
-                      </span>
-                    </span>
-                    <Badge variant={estadoEquipoVariant(equipo.estado)}>
-                      {estadoEquipoLabels[equipo.estado]}
-                    </Badge>
-                  </Link>
+                  <UbicacionEquipoNavLink
+                    equipoId={equipo.id}
+                    nombre={equipo.nombre}
+                    codigoInterno={equipo.codigoInterno}
+                    estado={equipo.estado}
+                  />
                 </li>
               ))}
             </ul>

@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { PendingNavButton, PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireModule } from "@/lib/auth";
 import { canReportAlertas } from "@/lib/permissions";
@@ -56,13 +55,14 @@ export default async function EquipoDetailPage({ params }: Props) {
 
   return (
     <div>
-      <Link
+      <PendingNavTextLink
         href="/equipos"
+        loadingText="Volviendo..."
         className="mb-4 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver a equipos
-      </Link>
+      </PendingNavTextLink>
 
       <PageHeader
         title={equipo.nombre}
@@ -71,9 +71,13 @@ export default async function EquipoDetailPage({ params }: Props) {
             <Badge variant={estadoEquipoVariant(equipo.estado)}>
               {estadoEquipoLabels[equipo.estado]}
             </Badge>
-            <Link href={`/consulta-qr?codigo=${equipo.codigoQr}&autostart=1`}>
-              <Button variant="outline">Escanear QR (simulación)</Button>
-            </Link>
+            <PendingNavButton
+              href={`/consulta-qr?codigo=${equipo.codigoQr}&autostart=1`}
+              variant="outline"
+              loadingText="Abriendo..."
+            >
+              Escanear QR (simulación)
+            </PendingNavButton>
           </div>
         }
       />
@@ -143,18 +147,23 @@ export default async function EquipoDetailPage({ params }: Props) {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-3">
                 <CardTitle>Medidores HVAC</CardTitle>
-                <Link href={`/medidores?equipo=${equipo.id}`} className="text-sm text-[#2563EB] hover:underline">
+                <PendingNavTextLink
+                  href={`/medidores?equipo=${equipo.id}`}
+                  loadingText="Abriendo..."
+                  className="text-sm text-[#2563EB] hover:underline"
+                >
                   Ver todos
-                </Link>
+                </PendingNavTextLink>
               </CardHeader>
               <CardContent className="space-y-3">
                 {equipo.medidores.map((medidor) => {
                   const overdue = isMedidorOverdue(medidor.proximaLecturaAt);
                   return (
-                    <Link
+                    <PendingNavTextLink
                       key={medidor.id}
                       href={`/medidores?id=${medidor.id}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 p-3 hover:border-blue-200"
+                      loadingText="Abriendo..."
+                      className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 p-3 text-left hover:border-blue-200"
                     >
                       <div>
                         <p className="font-medium text-gray-900">{medidor.nombre}</p>
@@ -169,7 +178,7 @@ export default async function EquipoDetailPage({ params }: Props) {
                           {formatLecturaValor(medidor.ultimaLectura, medidor.unidad)}
                         </span>
                       </div>
-                    </Link>
+                    </PendingNavTextLink>
                   );
                 })}
               </CardContent>

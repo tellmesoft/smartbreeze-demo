@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
@@ -353,12 +353,13 @@ function MantenimientoDetail({
           label="Proveedor externo"
           value={
             item.proveedor ? (
-              <Link
+              <PendingNavTextLink
                 href={`/proveedores?id=${item.proveedor.id}`}
+                loadingText="Abriendo..."
                 className="text-[#2563EB] hover:underline"
               >
                 {item.proveedor.nombre}
-              </Link>
+              </PendingNavTextLink>
             ) : (
               "—"
             )

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { MedidorHistorialChart } from "@/components/medidores/medidor-historial-chart";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
@@ -253,12 +253,13 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
                     ) : null}
                     <p className="mt-1 text-sm text-gray-500">
                       Equipo:{" "}
-                      <Link
+                      <PendingNavTextLink
                         href={`/equipos/${selected.equipo.id}`}
+                        loadingText="Abriendo..."
                         className="text-[#2563EB] hover:underline"
                       >
                         {selected.equipo.codigoInterno} — {selected.equipo.nombre}
-                      </Link>
+                      </PendingNavTextLink>
                     </p>
                     <p className="text-sm text-gray-500">
                       Ubicación: {selected.equipo.ubicacion.edificio}
@@ -302,10 +303,11 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
                     </p>
                     <div className="space-y-2">
                       {selected.mantenimientosPendientes.map((m) => (
-                        <Link
+                        <PendingNavTextLink
                           key={m.id}
                           href={`/mantenimientos?id=${m.id}`}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 bg-white px-3 py-2 text-sm hover:border-blue-200"
+                          loadingText="Abriendo..."
+                          className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 bg-white px-3 py-2 text-left text-sm hover:border-blue-200"
                         >
                           <span className="font-medium text-gray-900">{m.titulo}</span>
                           <div className="flex items-center gap-2">
@@ -321,7 +323,7 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
                               {m.fechaProgramadaLabel}
                             </span>
                           </div>
-                        </Link>
+                        </PendingNavTextLink>
                       ))}
                     </div>
                   </div>

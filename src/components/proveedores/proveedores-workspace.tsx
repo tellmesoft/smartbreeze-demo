@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Mail, Phone, Search } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
@@ -218,9 +218,10 @@ export function ProveedoresWorkspace({ items, selectedId }: Props) {
                   ) : (
                     <div className="space-y-2">
                       {selected.repuestos.map((r) => (
-                        <Link
+                        <PendingNavTextLink
                           key={r.id}
                           href={`/repuestos?id=${r.id}`}
+                          loadingText="Abriendo..."
                           className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm hover:border-blue-200"
                         >
                           <span>
@@ -228,7 +229,7 @@ export function ProveedoresWorkspace({ items, selectedId }: Props) {
                             <span className="ml-2 text-xs text-gray-400">{r.codigoInterno}</span>
                           </span>
                           <span className="text-gray-600">{r.cantidadDisponible} u.</span>
-                        </Link>
+                        </PendingNavTextLink>
                       ))}
                     </div>
                   )}
@@ -240,9 +241,10 @@ export function ProveedoresWorkspace({ items, selectedId }: Props) {
                   ) : (
                     <div className="space-y-2">
                       {selected.mantenimientos.map((m) => (
-                        <Link
+                        <PendingNavTextLink
                           key={m.id}
                           href={`/mantenimientos?id=${m.id}`}
+                          loadingText="Abriendo..."
                           className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 px-3 py-2 text-sm hover:border-blue-200"
                         >
                           <div>
@@ -254,7 +256,7 @@ export function ProveedoresWorkspace({ items, selectedId }: Props) {
                           <Badge variant={estadoMantenimientoVariant(m.estado)}>
                             {estadoMantenimientoLabels[m.estado]}
                           </Badge>
-                        </Link>
+                        </PendingNavTextLink>
                       ))}
                     </div>
                   )}

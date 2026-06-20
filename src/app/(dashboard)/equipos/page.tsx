@@ -1,18 +1,14 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { EquiposList } from "@/components/equipos/equipos-list";
+import { PendingNavButton } from "@/components/navigation/pending-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { EquiposFilters } from "@/components/equipos/equipos-filters";
 import { FiltersBarSkeleton } from "@/components/ui/loading";
 import { requireModule } from "@/lib/auth";
 import { canCreateCatalog, equiposScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { estadoEquipoLabels } from "@/lib/navigation";
-import { estadoEquipoVariant } from "@/lib/status-badges";
-import { listItemBase } from "@/lib/selection-styles";
-import { base64ToDataUrl, cn } from "@/lib/utils";
+import { base64ToDataUrl } from "@/lib/utils";
 import type { EstadoEquipo, Prisma } from "@/generated/prisma/client";
 
 type Props = {
@@ -67,9 +63,9 @@ export default async function EquiposPage({ searchParams }: Props) {
         title="Equipos HVAC"
         action={
           canCreateCatalog(user.rol) ? (
-            <Link href="/equipos/nuevo">
-              <Button>+ Nuevo equipo</Button>
-            </Link>
+            <PendingNavButton href="/equipos/nuevo" loadingText="Abriendo...">
+              + Nuevo equipo
+            </PendingNavButton>
           ) : null
         }
       />
@@ -96,45 +92,16 @@ export default async function EquiposPage({ searchParams }: Props) {
             </p>
           </div>
           <div className="max-h-[70vh] overflow-y-auto lg:max-h-[65vh]">
-            {equipos.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-500">
-                No se encontraron equipos con los filtros aplicados.
-              </p>
-            ) : (
-              equipos.map((equipo) => {
-                const foto = base64ToDataUrl(equipo.fotoBase64);
-                return (
-                  <Link
-                    key={equipo.id}
-                    href={`/equipos/${equipo.id}`}
-                    className={cn("flex items-center gap-3 px-4 py-3", listItemBase)}
-                  >
-                    {foto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={foto}
-                        alt={equipo.nombre}
-                        className="h-12 w-16 shrink-0 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded bg-gray-100 text-xs">
-                        HVAC
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-gray-900">{equipo.nombre}</p>
-                      <p className="truncate text-xs text-gray-500">
-                        {equipo.ubicacion.facultad} — {equipo.ubicacion.edificio}
-                      </p>
-                      <p className="truncate text-xs text-gray-400">{equipo.codigoInterno}</p>
-                    </div>
-                    <Badge variant={estadoEquipoVariant(equipo.estado)} className="hidden sm:inline-flex">
-                      {estadoEquipoLabels[equipo.estado]}
-                    </Badge>
-                  </Link>
-                );
-              })
-            )}
+            <EquiposList
+              equipos={equipos.map((equipo) => ({
+                id: equipo.id,
+                nombre: equipo.nombre,
+                codigoInterno: equipo.codigoInterno,
+                estado: equipo.estado,
+                foto: base64ToDataUrl(equipo.fotoBase64),
+                ubicacionLabel: `${equipo.ubicacion.facultad} — ${equipo.ubicacion.edificio}`,
+              }))}
+            />
           </div>
         </Card>
 

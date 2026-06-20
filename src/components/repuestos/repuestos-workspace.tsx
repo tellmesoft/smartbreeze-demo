@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
@@ -291,12 +291,13 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                         label="Proveedor"
                         value={
                           selected.proveedor ? (
-                            <Link
+                            <PendingNavTextLink
                               href={`/proveedores?id=${selected.proveedor.id}`}
+                              loadingText="Abriendo..."
                               className="text-[#2563EB] hover:underline"
                             >
                               {selected.proveedor.nombre}
-                            </Link>
+                            </PendingNavTextLink>
                           ) : (
                             "—"
                           )
@@ -307,12 +308,13 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                         <Detail
                           label="Equipo asociado"
                           value={
-                            <Link
+                            <PendingNavTextLink
                               href={`/equipos/${selected.equipo.id}`}
+                              loadingText="Abriendo..."
                               className="text-[#2563EB] hover:underline"
                             >
                               {selected.equipo.codigoInterno} — {selected.equipo.nombre}
-                            </Link>
+                            </PendingNavTextLink>
                           }
                         />
                       ) : (

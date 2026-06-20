@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { MapPin } from "lucide-react";
+import { Spinner } from "@/components/ui/loading";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 import { cn } from "@/lib/utils";
 import { chipActive, chipInactive, listItemBase, listItemSelected } from "@/lib/selection-styles";
 
@@ -23,6 +24,88 @@ type UbicacionesSidebarProps = {
   onNavigate?: (href: string) => void;
 };
 
+function FacultyChip({
+  href,
+  active,
+  label,
+  onNavigate,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  onNavigate?: (href: string) => void;
+}) {
+  const { isPending, push } = usePendingRouter();
+
+  return (
+    <button
+      type="button"
+      disabled={isPending}
+      aria-busy={isPending || undefined}
+      onClick={() => {
+        onNavigate?.(href);
+        push(href);
+      }}
+      className={cn(
+        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+        active ? chipActive : chipInactive,
+        isPending && "opacity-70"
+      )}
+    >
+      {isPending ? "..." : label}
+    </button>
+  );
+}
+
+function UbicacionNavItem({
+  href,
+  selected,
+  nombre,
+  piso,
+  equiposCount,
+  onNavigate,
+}: {
+  href: string;
+  selected: boolean;
+  nombre: string;
+  piso: string | null;
+  equiposCount: number;
+  onNavigate?: (href: string) => void;
+}) {
+  const { isPending, push } = usePendingRouter();
+
+  return (
+    <button
+      type="button"
+      disabled={isPending}
+      aria-busy={isPending || undefined}
+      onClick={() => {
+        onNavigate?.(href);
+        push(href);
+      }}
+      className={cn(
+        "flex w-full items-start gap-3 px-4 py-3 text-left",
+        listItemBase,
+        selected && listItemSelected,
+        isPending && "opacity-80"
+      )}
+    >
+      {isPending ? (
+        <Spinner size="sm" className="mt-0.5" label="Cargando" />
+      ) : (
+        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-gray-900">
+          {isPending ? "Cargando..." : nombre}
+        </p>
+        <p className="truncate text-xs text-gray-500">{piso ?? "—"}</p>
+      </div>
+      <span className="text-xs text-gray-400">{equiposCount}</span>
+    </button>
+  );
+}
+
 export function UbicacionesSidebar({
   ubicaciones,
   facultades,
@@ -30,13 +113,7 @@ export function UbicacionesSidebar({
   selectedFacultad,
   onNavigate,
 }: UbicacionesSidebarProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-
-  function navigate(href: string) {
-    if (onNavigate) onNavigate(href);
-    else router.push(href);
-  }
 
   function buildHref(updates: { facultad?: string; id?: string }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -65,28 +142,20 @@ export function UbicacionesSidebar({
       <div className="border-b border-gray-100 p-3">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">Facultad</p>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(buildHref({ facultad: "" }))}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              !selectedFacultad ? chipActive : chipInactive
-            )}
-          >
-            Todas
-          </button>
+          <FacultyChip
+            href={buildHref({ facultad: "" })}
+            active={!selectedFacultad}
+            label="Todas"
+            onNavigate={onNavigate}
+          />
           {facultades.map((f) => (
-            <button
+            <FacultyChip
               key={f}
-              type="button"
-              onClick={() => navigate(buildHref({ facultad: f }))}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                selectedFacultad === f ? chipActive : chipInactive
-              )}
-            >
-              {f.replace("Facultad de ", "").replace("Rectoría", "Rectoría")}
-            </button>
+              href={buildHref({ facultad: f })}
+              active={selectedFacultad === f}
+              label={f.replace("Facultad de ", "").replace("Rectoría", "Rectoría")}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
       </div>
@@ -101,22 +170,15 @@ export function UbicacionesSidebar({
               <div key={`${facultad}-${edificio}`}>
                 <p className="px-4 py-1.5 text-xs font-medium text-gray-400">{edificio}</p>
                 {items.map((u) => (
-                  <Link
+                  <UbicacionNavItem
                     key={u.id}
                     href={buildHref({ id: u.id })}
-                    className={cn(
-                      "flex items-start gap-3 px-4 py-3",
-                      listItemBase,
-                      selectedId === u.id && listItemSelected
-                    )}
-                  >
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-gray-900">{u.nombre}</p>
-                      <p className="truncate text-xs text-gray-500">{u.piso ?? "—"}</p>
-                    </div>
-                    <span className="text-xs text-gray-400">{u.equiposCount}</span>
-                  </Link>
+                    selected={selectedId === u.id}
+                    nombre={u.nombre}
+                    piso={u.piso}
+                    equiposCount={u.equiposCount}
+                    onNavigate={onNavigate}
+                  />
                 ))}
               </div>
             ))}

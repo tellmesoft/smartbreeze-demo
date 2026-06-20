@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { Search } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
@@ -188,12 +188,13 @@ export function ProcedimientosWorkspace({ items, selectedId }: Props) {
                     <ul className="space-y-2">
                       {selected.mantenimientos.map((m) => (
                         <li key={m.id}>
-                          <Link
+                          <PendingNavTextLink
                             href={`/mantenimientos?id=${m.id}&tab=pendientes`}
+                            loadingText="Abriendo..."
                             className="text-sm font-medium text-[#2563EB] hover:underline"
                           >
                             {m.titulo}
-                          </Link>
+                          </PendingNavTextLink>
                           <span className="ml-2 text-xs text-gray-400">
                             {m.equipoCodigo} · {m.estado}
                           </span>

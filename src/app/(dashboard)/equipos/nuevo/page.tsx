@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NuevoEquipoForm } from "@/components/equipos/nuevo-equipo-form";
@@ -19,13 +19,14 @@ export default async function NuevoEquipoPage() {
 
   return (
     <div>
-      <Link
+      <PendingNavTextLink
         href="/equipos"
+        loadingText="Volviendo..."
         className="mb-4 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver a equipos
-      </Link>
+      </PendingNavTextLink>
 
       <PageHeader title="Nuevo equipo HVAC" />
 

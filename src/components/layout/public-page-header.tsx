@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { cn } from "@/lib/utils";
 
 type PublicPageHeaderProps = {
@@ -16,14 +16,15 @@ export function PublicPageHeader({ backHref, backLabel, className }: PublicPageH
         className
       )}
     >
-      <div className="mx-auto flex h-14 max-w-2xl items-center px-4 sm:px-6">
-        <Link
+      <div className="mx-auto flex h-14 max-w-2xl items-center justify-center px-4 sm:px-6">
+        <PendingNavTextLink
           href={backHref}
-          className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+          loadingText="Cargando..."
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
           {backLabel}
-        </Link>
+        </PendingNavTextLink>
       </div>
     </header>
   );
