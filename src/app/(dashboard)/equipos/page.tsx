@@ -11,7 +11,8 @@ import { canCreateCatalog, equiposScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { estadoEquipoLabels } from "@/lib/navigation";
 import { estadoEquipoVariant } from "@/lib/status-badges";
-import { base64ToDataUrl } from "@/lib/utils";
+import { listItemBase } from "@/lib/selection-styles";
+import { base64ToDataUrl, cn } from "@/lib/utils";
 import type { EstadoEquipo, Prisma } from "@/generated/prisma/client";
 
 type Props = {
@@ -106,7 +107,7 @@ export default async function EquiposPage({ searchParams }: Props) {
                   <Link
                     key={equipo.id}
                     href={`/equipos/${equipo.id}`}
-                    className="flex items-center gap-3 border-b border-gray-50 px-4 py-3 hover:bg-blue-50"
+                    className={cn("flex items-center gap-3 px-4 py-3", listItemBase)}
                   >
                     {foto ? (
                       // eslint-disable-next-line @next/next/no-img-element

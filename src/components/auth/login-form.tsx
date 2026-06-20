@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { chipActive, chipInactive } from "@/lib/selection-styles";
 
 const demoAccounts = [
   { email: "admin@smartbreeze.local", label: "Administrador" },
@@ -53,9 +54,7 @@ export function LoginForm() {
             onClick={() => setEmail(account.email)}
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              selected
-                ? "border-[#2563EB] bg-blue-50 text-[#2563EB] ring-1 ring-[#2563EB]/20"
-                : "border-gray-200 text-gray-600 hover:border-blue-200 hover:text-blue-700"
+              selected ? chipActive : chipInactive
             )}
           >
             {account.label}

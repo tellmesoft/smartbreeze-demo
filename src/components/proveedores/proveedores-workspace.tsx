@@ -20,6 +20,7 @@ import {
 } from "@/lib/proveedores";
 import { estadoMantenimientoVariant } from "@/lib/status-badges";
 import { base64ToDataUrl, cn } from "@/lib/utils";
+import { listItemBase, listItemSelected } from "@/lib/selection-styles";
 import type { TipoProveedor } from "@/generated/prisma/client";
 
 export type ProveedorRow = {
@@ -126,8 +127,9 @@ export function ProveedoresWorkspace({ items, selectedId }: Props) {
                     type="button"
                     onClick={() => selectItem(item.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 border-b border-gray-50 px-4 py-3 text-left hover:bg-blue-50",
-                      selected?.id === item.id && "bg-blue-50"
+                      "flex w-full items-center gap-3 px-4 py-3",
+                      listItemBase,
+                      selected?.id === item.id && listItemSelected
                     )}
                   >
                     {avatar ? (

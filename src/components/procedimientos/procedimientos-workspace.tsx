@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { labelTipoEquipoProcedimiento } from "@/lib/procedimientos";
 import { cn } from "@/lib/utils";
+import { listItemBase, listItemSelected } from "@/lib/selection-styles";
 import type { TipoEquipo } from "@/generated/prisma/client";
 
 export type ProcedimientoRow = {
@@ -120,8 +121,9 @@ export function ProcedimientosWorkspace({ items, selectedId }: Props) {
                 type="button"
                 onClick={() => selectItem(item.id)}
                 className={cn(
-                  "flex w-full flex-col gap-1 border-b border-gray-50 px-4 py-3 text-left hover:bg-blue-50",
-                  selected?.id === item.id && "bg-blue-50"
+                  "flex w-full flex-col gap-1 px-4 py-3",
+                  listItemBase,
+                  selected?.id === item.id && listItemSelected
                 )}
               >
                 <span className="font-medium text-gray-900">{item.titulo}</span>

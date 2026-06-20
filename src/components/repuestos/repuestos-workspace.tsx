@@ -17,6 +17,7 @@ import {
   formatCurrency,
   needsRestock,
 } from "@/lib/repuestos";
+import { chipActive, chipInactive, listItemBase, listItemSelected, tabActive, tabInactive } from "@/lib/selection-styles";
 import { base64ToDataUrl, cn } from "@/lib/utils";
 import type { TipoRepuesto } from "@/generated/prisma/client";
 
@@ -185,8 +186,9 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                     type="button"
                     onClick={() => selectItem(item.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 border-b border-gray-50 px-4 py-3 text-left hover:bg-blue-50",
-                      selected?.id === item.id && "bg-blue-50"
+                      "flex w-full items-center gap-3 px-4 py-3",
+                      listItemBase,
+                      selected?.id === item.id && listItemSelected
                     )}
                   >
                     {foto ? (
@@ -443,9 +445,7 @@ function FilterChip({
       onClick={onClick}
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "border-blue-200 bg-blue-50 text-blue-700"
-          : "border-gray-200 text-gray-600 hover:border-gray-300"
+        active ? chipActive : chipInactive
       )}
     >
       {children}
@@ -467,10 +467,8 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "border-b-2 px-3 py-2 text-sm font-medium",
-        active
-          ? "border-[#2563EB] text-[#2563EB]"
-          : "border-transparent text-gray-500 hover:text-gray-800"
+        "border-b-2 px-3 py-2 text-sm transition-colors",
+        active ? tabActive : tabInactive
       )}
     >
       {children}

@@ -12,6 +12,7 @@ import { usePendingRouter } from "@/hooks/use-pending-router";
 import { estadoAlertaLabels, prioridadLabels } from "@/lib/navigation";
 import { estadoAlertaVariant, prioridadVariant } from "@/lib/status-badges";
 import { cn } from "@/lib/utils";
+import { tabActive, tabInactive } from "@/lib/selection-styles";
 import type { EstadoAlerta, Prioridad, Rol } from "@/generated/prisma/client";
 
 export type AlertaRow = {
@@ -122,10 +123,8 @@ export function AlertasWorkspace({
             type="button"
             onClick={() => setFiltro(tab.key)}
             className={cn(
-              "border-b-2 px-3 py-2 text-sm font-medium",
-              filtro === tab.key
-                ? "border-[#2563EB] text-[#2563EB]"
-                : "border-transparent text-gray-500 hover:text-gray-800"
+              "border-b-2 px-3 py-2 text-sm transition-colors",
+              filtro === tab.key ? tabActive : tabInactive
             )}
           >
             {tab.label}

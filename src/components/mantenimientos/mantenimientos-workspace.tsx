@@ -23,6 +23,7 @@ import {
   prioridadVariant,
 } from "@/lib/status-badges";
 import { base64ToDataUrl, cn } from "@/lib/utils";
+import { listItemBase, listItemSelected, tabActive, tabInactive } from "@/lib/selection-styles";
 import type { EstadoMantenimiento, Prioridad, TipoEquipo } from "@/generated/prisma/client";
 
 export type MantenimientoRow = {
@@ -236,10 +237,8 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "border-b-2 px-4 py-2 text-sm font-medium transition-colors",
-        active
-          ? "border-[#2563EB] text-[#2563EB]"
-          : "border-transparent text-gray-500 hover:text-gray-800"
+        "border-b-2 px-4 py-2 text-sm transition-colors",
+        active ? tabActive : tabInactive
       )}
     >
       {children}
@@ -273,8 +272,9 @@ function Group({
             type="button"
             onClick={() => onSelect(item.id)}
             className={cn(
-              "flex w-full items-start gap-3 border-b border-gray-50 px-4 py-3 text-left hover:bg-blue-50",
-              selectedId === item.id && "bg-blue-50"
+              "flex w-full items-start gap-3 px-4 py-3",
+              listItemBase,
+              selectedId === item.id && listItemSelected
             )}
           >
             {foto ? (

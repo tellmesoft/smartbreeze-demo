@@ -138,9 +138,24 @@ export function ProcedimientoEjecucion({
         <div className="flex flex-wrap gap-2">
           {(
             [
-              { key: "PASS", label: "PASS", className: "bg-green-600 hover:bg-green-700" },
-              { key: "FLAG", label: "FLAG", className: "bg-orange-500 hover:bg-orange-600" },
-              { key: "FAIL", label: "FAIL", className: "bg-red-600 hover:bg-red-700" },
+              {
+                key: "PASS",
+                label: "PASS",
+                className: "bg-green-600 hover:bg-green-700",
+                selectedRing: "ring-green-900 ring-offset-2",
+              },
+              {
+                key: "FLAG",
+                label: "FLAG",
+                className: "bg-orange-500 hover:bg-orange-600",
+                selectedRing: "ring-orange-900 ring-offset-2",
+              },
+              {
+                key: "FAIL",
+                label: "FAIL",
+                className: "bg-red-600 hover:bg-red-700",
+                selectedRing: "ring-red-900 ring-offset-2",
+              },
             ] as const
           ).map((opt) => (
             <Button
@@ -149,9 +164,9 @@ export function ProcedimientoEjecucion({
               disabled={pending}
               loading={pending}
               className={cn(
-                opt.className,
+                procedimiento.resultadoInspeccion === opt.key && opt.className,
                 procedimiento.resultadoInspeccion === opt.key &&
-                  "ring-2 ring-offset-2 ring-gray-400"
+                  cn("ring-2 shadow-md", opt.selectedRing)
               )}
               variant={procedimiento.resultadoInspeccion === opt.key ? "default" : "outline"}
               onClick={() => setResultado(opt.key)}

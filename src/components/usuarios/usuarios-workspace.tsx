@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { usePendingRouter } from "@/hooks/use-pending-router";
+import { tabActive } from "@/lib/selection-styles";
 import { rolLabels } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 import { rolesUsuarioOptions } from "@/lib/usuarios";
 import type { Rol } from "@/generated/prisma/client";
 
@@ -71,7 +73,7 @@ export function UsuariosWorkspace({ usuarios }: Props) {
       <div className="mb-5 border-b border-gray-200">
         <button
           type="button"
-          className="-mb-px border-b-2 border-[#2563EB] px-1 pb-3 text-sm font-semibold text-[#2563EB]"
+          className={cn("-mb-px px-1 pb-3 text-sm", tabActive)}
         >
           Usuarios
         </button>

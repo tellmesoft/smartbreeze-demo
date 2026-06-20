@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { chipActive, chipInactive, listItemBase, listItemSelected } from "@/lib/selection-styles";
 
 export type UbicacionListItem = {
   id: string;
@@ -68,10 +69,8 @@ export function UbicacionesSidebar({
             type="button"
             onClick={() => navigate(buildHref({ facultad: "" }))}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs",
-              !selectedFacultad
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-gray-200 text-gray-600 hover:border-gray-300"
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              !selectedFacultad ? chipActive : chipInactive
             )}
           >
             Todas
@@ -82,10 +81,8 @@ export function UbicacionesSidebar({
               type="button"
               onClick={() => navigate(buildHref({ facultad: f }))}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs",
-                selectedFacultad === f
-                  ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                selectedFacultad === f ? chipActive : chipInactive
               )}
             >
               {f.replace("Facultad de ", "").replace("Rectoría", "Rectoría")}
@@ -108,8 +105,9 @@ export function UbicacionesSidebar({
                     key={u.id}
                     href={buildHref({ id: u.id })}
                     className={cn(
-                      "flex items-start gap-3 border-b border-gray-50 px-4 py-3 hover:bg-blue-50",
-                      selectedId === u.id && "bg-blue-50"
+                      "flex items-start gap-3 px-4 py-3",
+                      listItemBase,
+                      selectedId === u.id && listItemSelected
                     )}
                   >
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
