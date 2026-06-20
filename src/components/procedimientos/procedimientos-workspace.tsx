@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -22,6 +22,7 @@ export type ProcedimientoRow = {
   descripcion: string | null;
   tipoEquipo: TipoEquipo | null;
   creadoPor: string | null;
+  creadoEnLabel: string;
   itemsCount: number;
   mantenimientosCount: number;
   mantenimientos: {
@@ -130,6 +131,7 @@ export function ProcedimientosWorkspace({ items, selectedId }: Props) {
                 <span className="text-xs text-gray-500">
                   {labelTipoEquipoProcedimiento(item.tipoEquipo)} · {item.itemsCount} ítems ·{" "}
                   {item.mantenimientosCount} mantenimientos
+                  {item.creadoPor ? ` · Por ${item.creadoPor}` : ""}
                 </span>
               </button>
             ))}
@@ -155,11 +157,59 @@ export function ProcedimientosWorkspace({ items, selectedId }: Props) {
                     <Badge variant="neutral">
                       {labelTipoEquipoProcedimiento(selected.tipoEquipo)}
                     </Badge>
-                    {selected.creadoPor ? (
-                      <Badge variant="default">Por {selected.creadoPor}</Badge>
-                    ) : null}
+                    <Badge variant="default">{selected.itemsCount} ítems</Badge>
+                    <Badge variant="default">
+                      {selected.mantenimientosCount} mantenimiento
+                      {selected.mantenimientosCount === 1 ? "" : "s"}
+                    </Badge>
                   </div>
                 </div>
+
+                <details className="group mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 marker:content-none transition-colors hover:bg-gray-50/80">
+                    <div className="min-w-0">
+                      <p className="text-base font-bold text-gray-900">Registro del procedimiento</p>
+                      <p className="mt-1 text-sm leading-snug text-gray-600">
+                        Consultá quién creó esta plantilla y cuándo quedó disponible en el catálogo.
+                      </p>
+                      {selected.creadoPor ? (
+                        <p className="mt-2 text-xs font-semibold text-gray-500">
+                          Creado por {selected.creadoPor} · {selected.creadoEnLabel}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-xs font-medium text-gray-400">
+                          Sin autor registrado · {selected.creadoEnLabel}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className="mt-1 h-5 w-5 shrink-0 text-gray-500 transition-transform duration-200 group-open:rotate-180"
+                      aria-hidden
+                    />
+                  </summary>
+                  <div className="border-t border-gray-200 px-5 pb-5 pt-4">
+                    <dl className="grid gap-3 sm:grid-cols-2">
+                      <RegistroDetail
+                        label="Creado por"
+                        value={selected.creadoPor ?? "Sin registrar"}
+                      />
+                      <RegistroDetail label="Fecha de alta" value={selected.creadoEnLabel} />
+                      <RegistroDetail
+                        label="Tipo de equipo"
+                        value={labelTipoEquipoProcedimiento(selected.tipoEquipo)}
+                      />
+                      <RegistroDetail
+                        label="Ítems del checklist"
+                        value={String(selected.itemsCount)}
+                      />
+                      <RegistroDetail
+                        label="Mantenimientos vinculados"
+                        value={String(selected.mantenimientosCount)}
+                        className="sm:col-span-2"
+                      />
+                    </dl>
+                  </div>
+                </details>
 
                 <div className="mb-6 space-y-4">
                   {Object.entries(secciones).map(([seccion, itemsSec]) => (
@@ -210,5 +260,22 @@ export function ProcedimientosWorkspace({ items, selectedId }: Props) {
       </div>
     </div>
     </AsyncContent>
+  );
+}
+
+function RegistroDetail({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</dt>
+      <dd className="mt-1 text-sm font-medium text-gray-900">{value}</dd>
+    </div>
   );
 }

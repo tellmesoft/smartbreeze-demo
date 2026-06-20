@@ -29,13 +29,7 @@ export default async function RepuestosPage({ searchParams }: Props) {
       include: {
         equipo: true,
         proveedor: true,
-        movimientos: {
-          orderBy: { fecha: "desc" },
-          take: 12,
-          include: {
-            registradoPor: { select: { nombre: true } },
-          },
-        },
+        _count: { select: { movimientos: true } },
       },
       orderBy: { nombre: "asc" },
     }),
@@ -44,39 +38,54 @@ export default async function RepuestosPage({ searchParams }: Props) {
     getStockMinimoRepuestos(),
   ]);
 
-  const items: RepuestoRow[] = repuestos.map((r) => ({
-    id: r.id,
-    codigoInterno: r.codigoInterno,
-    nombre: r.nombre,
-    descripcion: r.descripcion,
-    tipo: r.tipo,
-    cantidadDisponible: r.cantidadDisponible,
-    cantidadMinima: r.cantidadMinima,
-    cantidadPedida: r.cantidadPedida,
-    costoUnitario: r.costoUnitario,
-    proveedor: r.proveedor
-      ? { id: r.proveedor.id, nombre: r.proveedor.nombre }
-      : null,
-    ubicacionAlmacen: r.ubicacionAlmacen,
-    fotoBase64: r.fotoBase64,
-    qrBase64: r.qrBase64,
-    equipo: r.equipo
-      ? {
-          id: r.equipo.id,
-          codigoInterno: r.equipo.codigoInterno,
-          nombre: r.equipo.nombre,
-        }
-      : null,
-    movimientos: r.movimientos.map((m) => ({
-      id: m.id,
-      tipo: m.tipo,
-      cantidad: m.cantidad,
-      cantidadResultante: m.cantidadResultante,
-      observaciones: m.observaciones,
-      fechaLabel: formatDateTime(m.fecha),
-      registradoPor: m.registradoPor?.nombre ?? null,
-    })),
-  }));
+  const items: RepuestoRow[] = await Promise.all(
+    repuestos.map(async (r) => {
+      const [ultimoPedido, ultimoIngreso] = await Promise.all([
+        prisma.movimientoRepuesto.findFirst({
+          where: { repuestoId: r.id, tipo: "PEDIDO" },
+          orderBy: { fecha: "desc" },
+          include: { registradoPor: { select: { nombre: true } } },
+        }),
+        prisma.movimientoRepuesto.findFirst({
+          where: { repuestoId: r.id, tipo: "ENTRADA" },
+          orderBy: { fecha: "desc" },
+          include: { registradoPor: { select: { nombre: true } } },
+        }),
+      ]);
+
+      return {
+        id: r.id,
+        codigoInterno: r.codigoInterno,
+        nombre: r.nombre,
+        descripcion: r.descripcion,
+        tipo: r.tipo,
+        cantidadDisponible: r.cantidadDisponible,
+        cantidadMinima: r.cantidadMinima,
+        cantidadPedida: r.cantidadPedida,
+        costoUnitario: r.costoUnitario,
+        proveedor: r.proveedor
+          ? { id: r.proveedor.id, nombre: r.proveedor.nombre }
+          : null,
+        ubicacionAlmacen: r.ubicacionAlmacen,
+        fotoBase64: r.fotoBase64,
+        qrBase64: r.qrBase64,
+        equipo: r.equipo
+          ? {
+              id: r.equipo.id,
+              codigoInterno: r.equipo.codigoInterno,
+              nombre: r.equipo.nombre,
+            }
+          : null,
+        totalMovimientos: r._count.movimientos,
+        ultimoPedidoPor: ultimoPedido?.registradoPor?.nombre ?? null,
+        ultimoPedidoLabel: ultimoPedido ? formatDateTime(ultimoPedido.fecha) : null,
+        ultimoPedidoCantidad: ultimoPedido?.cantidad ?? null,
+        ultimoIngresoPor: ultimoIngreso?.registradoPor?.nombre ?? null,
+        ultimoIngresoLabel: ultimoIngreso ? formatDateTime(ultimoIngreso.fecha) : null,
+        ultimoIngresoCantidad: ultimoIngreso?.cantidad ?? null,
+      };
+    })
+  );
 
   return (
     <div>

@@ -74,6 +74,7 @@ export async function POST(request: Request) {
           cantidad: repuesto.cantidadDisponible,
           cantidadResultante: repuesto.cantidadDisponible,
           observaciones: "Stock inicial al crear el repuesto.",
+          registradoPorId: user.id,
         },
       });
     }

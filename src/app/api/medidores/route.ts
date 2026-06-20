@@ -54,6 +54,7 @@ export async function POST(request: Request) {
           valor: valorInicial!,
           fecha: now,
           observaciones: "Lectura inicial al crear el medidor.",
+          registradoPorId: user.id,
         },
       });
     }

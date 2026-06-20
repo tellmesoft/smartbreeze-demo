@@ -27,12 +27,14 @@ type Props = {
   mantenimientoId: string;
   procedimiento: ProcedimientoEjecucionData;
   equipoTipoEquipo: TipoEquipo;
+  embedded?: boolean;
 };
 
 export function ProcedimientoEjecucion({
   mantenimientoId,
   procedimiento,
   equipoTipoEquipo,
+  embedded = false,
 }: Props) {
   const { refresh } = usePendingRouter();
   const [pending, startTransition] = useTransition();
@@ -77,11 +79,20 @@ export function ProcedimientoEjecucion({
 
   return (
     <AsyncContent pending={pending} label="Guardando checklist...">
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+    <div
+      className={cn(
+        "space-y-4 bg-white p-4",
+        !embedded && "rounded-lg border border-gray-200"
+      )}
+    >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Procedimiento HVAC</p>
-          <p className="text-sm text-gray-600">{procedimiento.titulo}</p>
+          {!embedded ? (
+            <>
+              <p className="text-sm font-semibold text-gray-900">Procedimiento HVAC</p>
+              <p className="text-sm text-gray-600">{procedimiento.titulo}</p>
+            </>
+          ) : null}
           <p className="mt-1 text-xs text-gray-400">
             Aplica a: {labelTipoEquipoProcedimiento(procedimiento.tipoEquipo)}
           </p>

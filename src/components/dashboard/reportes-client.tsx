@@ -216,11 +216,13 @@ function MetricCard({ label, value }: { label: string; value: string | number })
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="min-w-0">
+        <div className="h-[280px] w-full min-w-0">{children}</div>
+      </CardContent>
     </Card>
   );
 }

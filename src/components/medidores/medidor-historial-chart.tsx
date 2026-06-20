@@ -36,8 +36,8 @@ export function MedidorHistorialChart({ data, unidad, titulo }: Props) {
   return (
     <div className="rounded-lg border border-gray-100 p-4">
       <p className="mb-4 text-sm font-semibold text-gray-800">{titulo}</p>
-      <div className="h-56 w-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-56 w-full min-w-0">
+        <ResponsiveContainer width="100%" height={224} minWidth={0}>
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#9ca3af" />

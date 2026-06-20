@@ -92,6 +92,7 @@ export async function recordLecturaMedidor(
   medidorId: string,
   valor: number,
   observaciones?: string | null,
+  registradoPorId?: string | null,
   fecha?: Date
 ) {
   const medidor = await db.medidor.findUnique({ where: { id: medidorId } });
@@ -106,6 +107,7 @@ export async function recordLecturaMedidor(
       valor,
       fecha: lecturaAt,
       observaciones: observaciones ?? null,
+      registradoPorId: registradoPorId ?? null,
     },
   });
 

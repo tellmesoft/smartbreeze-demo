@@ -27,7 +27,10 @@ export default async function MedidoresPage({ searchParams }: Props) {
         equipo: {
           include: { ubicacion: true },
         },
-        lecturas: { orderBy: { fecha: "asc" } },
+        lecturas: {
+          orderBy: { fecha: "asc" },
+          include: { registradoPor: { select: { nombre: true } } },
+        },
       },
       orderBy: { nombre: "asc" },
     }),
@@ -53,6 +56,7 @@ export default async function MedidoresPage({ searchParams }: Props) {
   const items: MedidorRow[] = medidores.map((m) => {
     const overdue = isMedidorOverdue(m.proximaLecturaAt);
     const pendientes = (mantenimientosMap.get(m.equipoId) ?? []).slice(0, 4);
+    const ultimaLecturaDb = m.lecturas[m.lecturas.length - 1] ?? null;
 
     return {
       id: m.id,
@@ -61,6 +65,14 @@ export default async function MedidoresPage({ searchParams }: Props) {
       frecuencia: m.frecuencia,
       ultimaLectura: m.ultimaLectura,
       ultimaLecturaLabel: m.ultimaLecturaAt ? formatDateTime(m.ultimaLecturaAt) : null,
+      ultimaLecturaRegistro: ultimaLecturaDb
+        ? {
+            valor: ultimaLecturaDb.valor,
+            fechaLabel: formatDateTime(ultimaLecturaDb.fecha),
+            registradoPor: ultimaLecturaDb.registradoPor?.nombre ?? null,
+          }
+        : null,
+      totalLecturas: m.lecturas.length,
       proximaLecturaLabel: m.proximaLecturaAt ? formatDate(m.proximaLecturaAt) : null,
       proximaLecturaAt: m.proximaLecturaAt?.toISOString() ?? null,
       overdue,

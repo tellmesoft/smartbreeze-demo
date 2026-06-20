@@ -63,6 +63,11 @@ export function canCreateRepuesto(rol: Rol): boolean {
   return OPS.includes(rol);
 }
 
+/** Alta de plantillas de procedimiento HVAC. */
+export function canCreateProcedimiento(rol: Rol): boolean {
+  return OPS.includes(rol);
+}
+
 /** Técnico: solo equipos donde es responsable asignado. */
 export function equiposScopeForRole(rol: Rol, userId: string) {
   return rol === "TECNICO" ? { tecnicoId: userId } : {};

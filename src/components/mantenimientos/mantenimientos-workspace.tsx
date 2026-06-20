@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -323,6 +323,17 @@ function MantenimientoDetail({
   pending: boolean;
   onEstado: (e: EstadoMantenimiento) => void;
 }) {
+  const ultimoHistorial = item.historialEstados[0];
+  const ultimoHistorialTexto = ultimoHistorial
+    ? ultimoHistorial.estadoAnterior
+      ? `${estadoMantenimientoLabels[ultimoHistorial.estadoAnterior]} → ${estadoMantenimientoLabels[ultimoHistorial.estadoNuevo]} · ${ultimoHistorial.cambiadoPor}`
+      : `Creación · ${ultimoHistorial.cambiadoPor}`
+    : null;
+  const procedimientoCompletados = item.procedimiento
+    ? item.procedimiento.items.filter((i) => i.completado).length
+    : 0;
+  const procedimientoTotal = item.procedimiento?.items.length ?? 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -407,44 +418,90 @@ function MantenimientoDetail({
         <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">{item.observaciones}</div>
       ) : null}
 
-      <div className="rounded-lg border border-gray-100 p-4">
-        <p className="mb-3 text-sm font-semibold text-gray-800">Historial de estados</p>
-        {item.historialEstados.length === 0 ? (
-          <p className="text-sm text-gray-500">Sin cambios de estado registrados.</p>
-        ) : (
-          <div className="space-y-3">
-            {item.historialEstados.map((entry) => (
-              <div key={entry.id} className="rounded-md border border-gray-100 p-3 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium text-gray-900">
-                    {entry.estadoAnterior
-                      ? `${estadoMantenimientoLabels[entry.estadoAnterior]} → ${estadoMantenimientoLabels[entry.estadoNuevo]}`
-                      : `Creación · ${estadoMantenimientoLabels[entry.estadoNuevo]}`}
-                  </span>
-                  <span className="text-xs text-gray-400">{entry.fechaLabel}</span>
-                </div>
-                <p className="mt-1 text-gray-600">
-                  {entry.estadoAnterior ? "Cambio por" : "Registrado por"}:{" "}
-                  <span className="font-medium text-gray-800">{entry.cambiadoPor}</span>
-                </p>
-                {entry.estadoAnterior === "COMPLETADO" &&
-                entry.estadoNuevo !== "COMPLETADO" ? (
-                  <p className="mt-2 text-xs font-medium text-amber-700">
-                    Regresión desde Completado a {estadoMantenimientoLabels[entry.estadoNuevo]}.
-                  </p>
-                ) : null}
-              </div>
-            ))}
+      <details className="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 marker:content-none transition-colors hover:bg-gray-50/80">
+          <div className="min-w-0">
+            <p className="text-base font-bold text-gray-900">Historial de estados</p>
+            <p className="mt-1 text-sm leading-snug text-gray-600">
+              Consultá quién creó el mantenimiento y quién registró cada cambio de estado.
+            </p>
+            {item.historialEstados.length > 0 ? (
+              <p className="mt-2 text-xs font-semibold text-gray-500">
+                {item.historialEstados.length} registro
+                {item.historialEstados.length === 1 ? "" : "s"}
+                {ultimoHistorialTexto ? ` · Último: ${ultimoHistorialTexto}` : ""}
+              </p>
+            ) : (
+              <p className="mt-2 text-xs font-medium text-gray-400">Sin cambios registrados aún.</p>
+            )}
           </div>
-        )}
-      </div>
+          <ChevronDown
+            className="mt-1 h-5 w-5 shrink-0 text-gray-500 transition-transform duration-200 group-open:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <div className="border-t border-gray-200 px-5 pb-5 pt-4">
+          {item.historialEstados.length === 0 ? (
+            <p className="text-sm text-gray-500">Sin cambios de estado registrados.</p>
+          ) : (
+            <div className="space-y-3">
+              {item.historialEstados.map((entry) => (
+                <div key={entry.id} className="rounded-md border border-gray-100 p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium text-gray-900">
+                      {entry.estadoAnterior
+                        ? `${estadoMantenimientoLabels[entry.estadoAnterior]} → ${estadoMantenimientoLabels[entry.estadoNuevo]}`
+                        : `Creación · ${estadoMantenimientoLabels[entry.estadoNuevo]}`}
+                    </span>
+                    <span className="text-xs text-gray-400">{entry.fechaLabel}</span>
+                  </div>
+                  <p className="mt-1 text-gray-600">
+                    {entry.estadoAnterior ? "Cambio por" : "Registrado por"}:{" "}
+                    <span className="font-medium text-gray-800">{entry.cambiadoPor}</span>
+                  </p>
+                  {entry.estadoAnterior === "COMPLETADO" &&
+                  entry.estadoNuevo !== "COMPLETADO" ? (
+                    <p className="mt-2 text-xs font-medium text-amber-700">
+                      Regresión desde Completado a {estadoMantenimientoLabels[entry.estadoNuevo]}.
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
 
       {item.procedimiento ? (
-        <ProcedimientoEjecucion
-          mantenimientoId={item.id}
-          procedimiento={item.procedimiento}
-          equipoTipoEquipo={item.equipo.tipoEquipo}
-        />
+        <details className="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 marker:content-none transition-colors hover:bg-gray-50/80">
+            <div className="min-w-0">
+              <p className="text-base font-bold text-gray-900">Procedimiento HVAC</p>
+              <p className="mt-1 text-sm leading-snug text-gray-600">
+                Ejecutá el checklist de inspección e indicá el resultado general (PASS, FLAG o FAIL).
+              </p>
+              <p className="mt-2 text-xs font-semibold text-gray-500">
+                {item.procedimiento.titulo} · Avance {procedimientoCompletados}/{procedimientoTotal}{" "}
+                ítems
+                {item.procedimiento.resultadoInspeccion
+                  ? ` · Resultado ${item.procedimiento.resultadoInspeccion}`
+                  : " · Sin resultado aún"}
+              </p>
+            </div>
+            <ChevronDown
+              className="mt-1 h-5 w-5 shrink-0 text-gray-500 transition-transform duration-200 group-open:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <div className="border-t border-gray-200">
+            <ProcedimientoEjecucion
+              mantenimientoId={item.id}
+              procedimiento={item.procedimiento}
+              equipoTipoEquipo={item.equipo.tipoEquipo}
+              embedded
+            />
+          </div>
+        </details>
       ) : (
         <p className="rounded-md border border-dashed border-gray-200 p-4 text-sm text-gray-500">
           Sin procedimiento asignado para este mantenimiento.

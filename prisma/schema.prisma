@@ -107,6 +107,7 @@ model Usuario {
   mantenimientosCreados Mantenimiento[] @relation("MantenimientoCreador")
   historialEstadosMantenimiento HistorialEstadoMantenimiento[] @relation("HistorialEstadoMantenimientoUsuario")
   historialEstadosAlerta HistorialEstadoAlerta[] @relation("HistorialEstadoAlertaUsuario")
+  lecturasMedidor  LecturaMedidor[] @relation("LecturaMedidorRegistrador")
   alertas        Alerta[]        @relation("ReportadoPor")
   procedimientos Procedimiento[] @relation("ProcedimientoCreador")
   proveedores    Proveedor[]     @relation("ProveedorCreador")
@@ -369,12 +370,14 @@ model Medidor {
 }
 
 model LecturaMedidor {
-  id            String   @id @default(cuid())
-  medidorId     String   @map("medidor_id")
-  valor         Float
-  fecha         DateTime @default(now())
-  observaciones String?
-  medidor       Medidor  @relation(fields: [medidorId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  medidorId       String   @map("medidor_id")
+  valor           Float
+  fecha           DateTime @default(now())
+  observaciones   String?
+  registradoPorId String?  @map("registrado_por_id")
+  medidor         Medidor  @relation(fields: [medidorId], references: [id], onDelete: Cascade)
+  registradoPor   Usuario? @relation("LecturaMedidorRegistrador", fields: [registradoPorId], references: [id], onDelete: SetNull)
 
   @@map("lecturas_medidor")
 }

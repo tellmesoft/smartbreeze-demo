@@ -507,6 +507,7 @@ async function main() {
           cantidadResultante: data.cantidadDisponible,
           observaciones: "Stock inicial de demo.",
           fecha: addDays(-30),
+          registradoPorId: admin.id,
         },
       });
     }
@@ -521,6 +522,7 @@ async function main() {
             cantidadResultante: 2,
             observaciones: "Ingreso inicial.",
             fecha: addDays(-45),
+            registradoPorId: admin.id,
           },
           {
             repuestoId: repuesto.id,
@@ -529,6 +531,7 @@ async function main() {
             cantidadResultante: 0,
             observaciones: "Consumo en mantenimiento correctivo.",
             fecha: addDays(-10),
+            registradoPorId: tecnico.id,
           },
         ],
       });
@@ -575,7 +578,8 @@ async function main() {
       },
     });
 
-    for (const lectura of data.lecturas) {
+    for (let i = 0; i < data.lecturas.length; i++) {
+      const lectura = data.lecturas[i];
       const fecha = addDays(-lectura.daysAgo);
       await prisma.lecturaMedidor.create({
         data: {
@@ -583,6 +587,7 @@ async function main() {
           valor: lectura.valor,
           fecha,
           observaciones: lectura.observaciones ?? null,
+          registradoPorId: i % 2 === 0 ? tecnico.id : admin.id,
         },
       });
     }

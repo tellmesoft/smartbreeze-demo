@@ -7,9 +7,10 @@ import {
 } from "@/components/procedimientos/procedimientos-workspace";
 import { MasterDetailPageSkeleton } from "@/components/ui/loading";
 import { requireModule } from "@/lib/auth";
-import { canCreateCatalog } from "@/lib/permissions";
+import { canCreateProcedimiento } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { estadoMantenimientoLabels } from "@/lib/navigation";
+import { formatDateTime } from "@/lib/utils";
 
 type Props = {
   searchParams: Promise<{ id?: string; q?: string }>;
@@ -39,6 +40,7 @@ export default async function ProcedimientosPage({ searchParams }: Props) {
     descripcion: p.descripcion,
     tipoEquipo: p.tipoEquipo,
     creadoPor: p.creadoPor?.nombre ?? null,
+    creadoEnLabel: formatDateTime(p.createdAt),
     itemsCount: p._count.items,
     mantenimientosCount: p._count.mantenimientos,
     items: p.items.map((item) => ({
@@ -59,7 +61,7 @@ export default async function ProcedimientosPage({ searchParams }: Props) {
     <div>
       <PageHeader
         title="Procedimientos"
-        action={canCreateCatalog(user.rol) ? <NuevoProcedimientoButton /> : undefined}
+        action={canCreateProcedimiento(user.rol) ? <NuevoProcedimientoButton /> : undefined}
       />
 
       <Suspense fallback={<MasterDetailPageSkeleton />}>

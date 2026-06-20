@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { MedidorHistorialChart } from "@/components/medidores/medidor-historial-chart";
+import { MedidorLecturasHistorial } from "@/components/medidores/medidor-lecturas-historial";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,12 @@ export type MedidorRow = {
   frecuencia: FrecuenciaLectura;
   ultimaLectura: number | null;
   ultimaLecturaLabel: string | null;
+  ultimaLecturaRegistro: {
+    valor: number;
+    fechaLabel: string;
+    registradoPor: string | null;
+  } | null;
+  totalLecturas: number;
   proximaLecturaLabel: string | null;
   proximaLecturaAt: string | null;
   overdue: boolean;
@@ -86,6 +93,7 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
   const [lecturaValor, setLecturaValor] = useState("");
   const [lecturaObs, setLecturaObs] = useState("");
   const [lecturaError, setLecturaError] = useState("");
+  const [historialRefreshKey, setHistorialRefreshKey] = useState(0);
 
   const urlSelectedId = searchParams.get("id") ?? selectedId;
 
@@ -151,6 +159,7 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
       setLecturaOpen(false);
       setLecturaValor("");
       setLecturaObs("");
+      setHistorialRefreshKey((key) => key + 1);
       refresh();
     });
   }
@@ -328,6 +337,14 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
                     </div>
                   </div>
                 ) : null}
+
+                <MedidorLecturasHistorial
+                  medidorId={selected.id}
+                  unidad={selected.unidad}
+                  totalLecturas={selected.totalLecturas}
+                  ultimaLecturaRegistro={selected.ultimaLecturaRegistro}
+                  refreshKey={historialRefreshKey}
+                />
 
                 <MedidorHistorialChart
                   data={selected.chartData}

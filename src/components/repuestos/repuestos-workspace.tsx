@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button";
 import { AsyncContent } from "@/components/ui/loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
+import { RepuestoMovimientosHistorial } from "@/components/repuestos/repuesto-movimientos-historial";
 import { tipoRepuestoLabels } from "@/lib/repuestos";
 import {
   formatCurrency,
   needsRestock,
   suggestedPedidoQty,
 } from "@/lib/repuestos";
-import { chipActive, chipInactive, listItemBase, listItemSelected, tabActive, tabInactive } from "@/lib/selection-styles";
+import { chipActive, chipInactive, listItemBase, listItemSelected } from "@/lib/selection-styles";
 import { base64ToDataUrl, cn } from "@/lib/utils";
 import type { TipoRepuesto } from "@/generated/prisma/client";
 
@@ -44,15 +45,13 @@ export type RepuestoRow = {
     codigoInterno: string;
     nombre: string;
   } | null;
-  movimientos: {
-    id: string;
-    tipo: "ENTRADA" | "SALIDA" | "AJUSTE" | "PEDIDO";
-    cantidad: number;
-    cantidadResultante: number;
-    observaciones: string | null;
-    fechaLabel: string;
-    registradoPor: string | null;
-  }[];
+  totalMovimientos: number;
+  ultimoPedidoPor: string | null;
+  ultimoPedidoLabel: string | null;
+  ultimoPedidoCantidad: number | null;
+  ultimoIngresoPor: string | null;
+  ultimoIngresoLabel: string | null;
+  ultimoIngresoCantidad: number | null;
 };
 
 type Props = {
@@ -64,13 +63,6 @@ type Props = {
 
 type Filtro = "todos" | "reabastecer";
 
-const movimientoLabels = {
-  ENTRADA: "Ingreso en bodega",
-  SALIDA: "Salida",
-  AJUSTE: "Ajuste",
-  PEDIDO: "Pedido",
-} as const;
-
 export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: Props) {
   const { isPending: isNavigating, push, refresh } = usePendingRouter();
   const searchParams = useSearchParams();
@@ -78,7 +70,7 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [filtro, setFiltro] = useState<Filtro>("todos");
-  const [detailTab, setDetailTab] = useState<"detalle" | "historial">("detalle");
+  const [historialRefreshKey, setHistorialRefreshKey] = useState(0);
   const [pedirOpen, setPedirOpen] = useState(false);
   const [ingresoOpen, setIngresoOpen] = useState(false);
   const [pedirQty, setPedirQty] = useState("1");
@@ -121,7 +113,6 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
     const params = new URLSearchParams(searchParams.toString());
     params.set("id", id);
     push(`/repuestos?${params.toString()}`, { scroll: false });
-    setDetailTab("detalle");
   }
 
   function openPedirModal() {
@@ -161,6 +152,7 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
         return;
       }
       setPedirOpen(false);
+      setHistorialRefreshKey((key) => key + 1);
       refresh();
     });
   }
@@ -186,6 +178,7 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
         return;
       }
       setIngresoOpen(false);
+      setHistorialRefreshKey((key) => key + 1);
       refresh();
     });
   }
@@ -315,20 +308,20 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
                   <Metric label="Pedido" value={`${selected.cantidadPedida} u.`} />
                 </div>
 
-                <div className="mb-4 flex gap-2 border-b border-gray-200">
-                  <TabButton active={detailTab === "detalle"} onClick={() => setDetailTab("detalle")}>
-                    Detalle
-                  </TabButton>
-                  <TabButton
-                    active={detailTab === "historial"}
-                    onClick={() => setDetailTab("historial")}
-                  >
-                    Historial
-                  </TabButton>
-                </div>
+                <RepuestoMovimientosHistorial
+                  repuestoId={selected.id}
+                  cantidadPedida={selected.cantidadPedida}
+                  ultimoPedidoPor={selected.ultimoPedidoPor}
+                  ultimoPedidoLabel={selected.ultimoPedidoLabel}
+                  ultimoPedidoCantidad={selected.ultimoPedidoCantidad}
+                  ultimoIngresoPor={selected.ultimoIngresoPor}
+                  ultimoIngresoLabel={selected.ultimoIngresoLabel}
+                  ultimoIngresoCantidad={selected.ultimoIngresoCantidad}
+                  totalMovimientos={selected.totalMovimientos}
+                  refreshKey={historialRefreshKey}
+                />
 
-                {detailTab === "detalle" ? (
-                  <div className="space-y-4">
+                <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="neutral">{tipoRepuestoLabels[selected.tipo]}</Badge>
                       {needsRestock(selected.cantidadDisponible, stockMinimo) ? (
@@ -399,42 +392,7 @@ export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: 
                         className="max-h-56 rounded-lg border object-cover"
                       />
                     ) : null}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {selected.movimientos.length === 0 ? (
-                      <p className="text-sm text-gray-500">Sin movimientos registrados.</p>
-                    ) : (
-                      selected.movimientos.map((mov) => (
-                        <div
-                          key={mov.id}
-                          className="rounded-md border border-gray-100 p-3 text-sm"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-medium text-gray-900">
-                              {movimientoLabels[mov.tipo]} · {mov.cantidad} u.
-                            </span>
-                            <span className="text-xs text-gray-400">{mov.fechaLabel}</span>
-                          </div>
-                          <p className="mt-1 text-gray-600">
-                            {mov.tipo === "PEDIDO"
-                              ? `Pedido pendiente: ${mov.cantidadResultante} u.`
-                              : `Stock disponible: ${mov.cantidadResultante} u.`}
-                          </p>
-                          {mov.registradoPor ? (
-                            <p className="mt-1 text-gray-600">
-                              {mov.tipo === "PEDIDO" ? "Pedido por" : "Registrado por"}:{" "}
-                              <span className="font-medium text-gray-800">{mov.registradoPor}</span>
-                            </p>
-                          ) : null}
-                          {mov.observaciones ? (
-                            <p className="mt-1 text-gray-500">{mov.observaciones}</p>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
+                </div>
               </>
             )}
           </CardContent>
@@ -584,29 +542,6 @@ function FilterChip({
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
         active ? chipActive : chipInactive
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "border-b-2 px-3 py-2 text-sm transition-colors",
-        active ? tabActive : tabInactive
       )}
     >
       {children}
