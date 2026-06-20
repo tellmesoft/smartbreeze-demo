@@ -1,9 +1,10 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Spinner } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -27,10 +28,41 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+  loadingText?: string;
+}
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+export function Button({
+  className,
+  variant,
+  size,
+  loading = false,
+  loadingText,
+  children,
+  disabled,
+  ...props
+}: ButtonProps) {
+  const spinnerClass =
+    variant === "default" || variant === undefined ? "border-white border-t-transparent" : "";
+
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? (
+        <>
+          <Spinner size="sm" className={spinnerClass} label={loadingText ?? "Cargando"} />
+          {loadingText ?? children}
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
 }
 
 export { buttonVariants };

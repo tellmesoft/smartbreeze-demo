@@ -1,12 +1,19 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AsyncContent } from "@/components/ui/loading";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  ProcedimientoEjecucion,
+  type ProcedimientoEjecucionData,
+} from "@/components/procedimientos/procedimiento-ejecucion";
 import {
   estadoMantenimientoLabels,
   prioridadLabels,
@@ -15,8 +22,8 @@ import {
   estadoMantenimientoVariant,
   prioridadVariant,
 } from "@/lib/status-badges";
-import { base64ToDataUrl, cn, formatDate, formatDateTime } from "@/lib/utils";
-import type { EstadoMantenimiento, Prioridad } from "@/generated/prisma/client";
+import { base64ToDataUrl, cn } from "@/lib/utils";
+import type { EstadoMantenimiento, Prioridad, TipoEquipo } from "@/generated/prisma/client";
 
 export type MantenimientoRow = {
   id: string;
@@ -24,22 +31,31 @@ export type MantenimientoRow = {
   estado: EstadoMantenimiento;
   prioridad: Prioridad;
   fechaProgramada: string;
+  fechaProgramadaLabel: string;
   fechaRealizada: string | null;
+  fechaRealizadaLabel: string;
   horasTrabajadas: number | null;
   observaciones: string | null;
   estadoGeneral: string | null;
   proximaMantenimiento: string | null;
+  proximaMantenimientoLabel: string;
   recurrencia: string | null;
   tecnicoId: string;
   tecnicoNombre: string;
+  proveedor: {
+    id: string;
+    nombre: string;
+  } | null;
   equipo: {
     id: string;
     codigoInterno: string;
     nombre: string;
+    tipoEquipo: TipoEquipo;
     fotoBase64: string | null;
     edificio: string;
     ubicacion: string;
   };
+  procedimiento: ProcedimientoEjecucionData | null;
   parametrosHvac: {
     voltaje: number | null;
     amperaje: number | null;
@@ -77,11 +93,10 @@ export function MantenimientosWorkspace({
   initialTab,
   selectedId,
 }: Props) {
-  const router = useRouter();
+  const { isPending: isNavigating, push, refresh } = usePendingRouter();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [pending, startTransition] = useTransition();
-  const [inspeccion, setInspeccion] = useState<"PASS" | "FLAG" | "FAIL" | null>(null);
 
   const tab = (searchParams.get("tab") as "pendientes" | "realizados") || initialTab;
   const urlSelectedId = searchParams.get("id") ?? selectedId;
@@ -104,21 +119,21 @@ export function MantenimientosWorkspace({
   function clearSelection() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("id");
-    router.push(`/mantenimientos?${params.toString()}`);
+    push(`/mantenimientos?${params.toString()}`);
   }
 
   function setTab(next: "pendientes" | "realizados") {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", next);
     params.delete("id");
-    router.push(`/mantenimientos?${params.toString()}`);
+    push(`/mantenimientos?${params.toString()}`);
   }
 
   function selectItem(id: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("id", id);
     if (!params.get("tab")) params.set("tab", tab);
-    router.push(`/mantenimientos?${params.toString()}`, { scroll: false });
+    push(`/mantenimientos?${params.toString()}`, { scroll: false });
   }
 
   async function updateEstado(estado: EstadoMantenimiento) {
@@ -129,11 +144,14 @@ export function MantenimientosWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
       });
-      router.refresh();
+      refresh();
     });
   }
 
+  const isLoading = pending || isNavigating;
+
   return (
+    <AsyncContent pending={isLoading} label={pending ? "Actualizando..." : "Cargando..."}>
     <div>
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <TabButton active={tab === "pendientes"} onClick={() => setTab("pendientes")}>
@@ -190,18 +208,17 @@ export function MantenimientosWorkspace({
               <>
                 <MasterDetailBack label="Volver a mantenimientos" onBack={clearSelection} />
                 <MantenimientoDetail
-                item={selected}
-                pending={pending}
-                inspeccion={inspeccion}
-                onInspeccion={setInspeccion}
-                onEstado={updateEstado}
-              />
+                  item={selected}
+                  pending={pending}
+                  onEstado={updateEstado}
+                />
               </>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
+    </AsyncContent>
   );
 }
 
@@ -290,14 +307,10 @@ function Group({
 function MantenimientoDetail({
   item,
   pending,
-  inspeccion,
-  onInspeccion,
   onEstado,
 }: {
   item: MantenimientoRow;
   pending: boolean;
-  inspeccion: "PASS" | "FLAG" | "FAIL" | null;
-  onInspeccion: (v: "PASS" | "FLAG" | "FAIL") => void;
   onEstado: (e: EstadoMantenimiento) => void;
 }) {
   return (
@@ -324,6 +337,7 @@ function MantenimientoDetail({
             size="sm"
             variant={item.estado === action.estado ? "default" : "outline"}
             disabled={pending}
+            loading={pending}
             onClick={() => onEstado(action.estado)}
           >
             {action.label}
@@ -332,13 +346,28 @@ function MantenimientoDetail({
       </div>
 
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <Detail label="Fecha programada" value={formatDateTime(item.fechaProgramada)} />
-        <Detail label="Fecha realizada" value={formatDate(item.fechaRealizada)} />
+        <Detail label="Fecha programada" value={item.fechaProgramadaLabel} />
+        <Detail label="Fecha realizada" value={item.fechaRealizadaLabel} />
         <Detail label="Técnico" value={item.tecnicoNombre} />
+        <Detail
+          label="Proveedor externo"
+          value={
+            item.proveedor ? (
+              <Link
+                href={`/proveedores?id=${item.proveedor.id}`}
+                className="text-[#2563EB] hover:underline"
+              >
+                {item.proveedor.nombre}
+              </Link>
+            ) : (
+              "—"
+            )
+          }
+        />
         <Detail label="Ubicación" value={`${item.equipo.edificio} — ${item.equipo.ubicacion}`} />
         <Detail label="Horas trabajadas" value={item.horasTrabajadas ? `${item.horasTrabajadas} h` : "—"} />
         <Detail label="Estado general" value={item.estadoGeneral ?? "—"} />
-        <Detail label="Próxima mantención" value={formatDate(item.proximaMantenimiento)} />
+        <Detail label="Próxima mantención" value={item.proximaMantenimientoLabel} />
         {item.recurrencia ? (
           <Detail label="Recurrencia" value={item.recurrencia} className="sm:col-span-2" />
         ) : null}
@@ -348,28 +377,17 @@ function MantenimientoDetail({
         <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">{item.observaciones}</div>
       ) : null}
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-gray-800">Inspección general (demo)</p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              { key: "PASS", label: "PASS", className: "bg-green-600 hover:bg-green-700" },
-              { key: "FLAG", label: "FLAG", className: "bg-orange-500 hover:bg-orange-600" },
-              { key: "FAIL", label: "FAIL", className: "bg-red-600 hover:bg-red-700" },
-            ] as const
-          ).map((opt) => (
-            <Button
-              key={opt.key}
-              size="sm"
-              className={cn(opt.className, inspeccion === opt.key && "ring-2 ring-offset-2 ring-gray-400")}
-              variant={inspeccion === opt.key ? "default" : "outline"}
-              onClick={() => onInspeccion(opt.key)}
-            >
-              {opt.label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      {item.procedimiento ? (
+        <ProcedimientoEjecucion
+          mantenimientoId={item.id}
+          procedimiento={item.procedimiento}
+          equipoTipoEquipo={item.equipo.tipoEquipo}
+        />
+      ) : (
+        <p className="rounded-md border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+          Sin procedimiento asignado para este mantenimiento.
+        </p>
+      )}
 
       {item.parametrosHvac ? (
         <div className="rounded-lg border border-gray-100 p-4">
@@ -402,7 +420,7 @@ function Detail({
   className,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   className?: string;
 }) {
   return (

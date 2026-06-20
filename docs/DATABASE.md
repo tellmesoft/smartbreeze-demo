@@ -28,7 +28,7 @@ El demo usa **PostgreSQL** con Prisma ORM. Hay dos modos de conexión:
 ### Configurar `.env`
 
 ```env
-DATABASE_URL="postgresql://smartbreeze_user:TU_CONTRASEÑA@dpg-d8qt8i8js32c73ba2gs0-a.oregon-postgres.render.com/smartbreeze?sslmode=require"
+DATABASE_URL="postgresql://smartbreeze_user:TU_CONTRASEÑA@dpg-d8qt8i8js32c73ba2gs0-a.oregon-postgres.render.com/smartbreeze?sslmode=verify-full"
 ```
 
 ### Sincronizar esquema y datos demo

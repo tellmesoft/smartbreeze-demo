@@ -1,11 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AsyncContent } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/input";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 import { estadoEquipoLabels } from "@/lib/navigation";
 
 type EquiposFiltersProps = {
@@ -20,24 +22,25 @@ type EquiposFiltersProps = {
 };
 
 export function EquiposFilters({ facultades, edificios, current }: EquiposFiltersProps) {
-  const router = useRouter();
+  const { isPending, push } = usePendingRouter();
   const searchParams = useSearchParams();
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
-    router.push(`/equipos?${params.toString()}`);
+    push(`/equipos?${params.toString()}`);
   }
 
   function clearFilters() {
-    router.push("/equipos");
+    push("/equipos");
   }
 
   const hasFilters = Boolean(current.facultad || current.edificio || current.estado || current.q);
 
   return (
-    <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
+    <AsyncContent pending={isPending} label="Filtrando equipos..." className="mb-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="space-y-1 xl:col-span-2">
           <Label htmlFor="q">Buscar</Label>
@@ -115,5 +118,6 @@ export function EquiposFilters({ facultades, edificios, current }: EquiposFilter
         </div>
       ) : null}
     </div>
+    </AsyncContent>
   );
 }

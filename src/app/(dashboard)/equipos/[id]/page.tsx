@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireSession } from "@/lib/auth";
+import { requireModule } from "@/lib/auth";
+import { canReportAlertas } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
   estadoEquipoLabels,
@@ -14,13 +15,19 @@ import {
 } from "@/lib/navigation";
 import { estadoEquipoVariant, estadoMantenimientoVariant } from "@/lib/status-badges";
 import { formatBtu } from "@/lib/equipos";
+import {
+  frecuenciaLecturaLabels,
+  formatLecturaValor,
+  isMedidorOverdue,
+  unidadMedidorLabels,
+} from "@/lib/medidores";
 import { ReportarAlertaForm } from "@/components/alertas/reportar-alerta-form";
 import { base64ToDataUrl, formatDate } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function EquipoDetailPage({ params }: Props) {
-  const user = await requireSession(["ADMINISTRADOR", "TECNICO"]);
+  const user = await requireModule("equipos");
   const { id } = await params;
 
   const equipo = await prisma.equipo.findUnique({
@@ -37,10 +44,12 @@ export default async function EquipoDetailPage({ params }: Props) {
         },
       },
       alertas: { orderBy: { fecha: "desc" }, take: 3 },
+      medidores: { orderBy: { nombre: "asc" } },
     },
   });
 
   if (!equipo) notFound();
+  if (user.rol === "TECNICO" && equipo.tecnicoId !== user.id) notFound();
 
   const foto = base64ToDataUrl(equipo.fotoBase64);
   const qr = base64ToDataUrl(equipo.qrBase64);
@@ -57,7 +66,6 @@ export default async function EquipoDetailPage({ params }: Props) {
 
       <PageHeader
         title={equipo.nombre}
-        description={`Código interno: ${equipo.codigoInterno}`}
         action={
           <div className="flex gap-2">
             <Badge variant={estadoEquipoVariant(equipo.estado)}>
@@ -131,6 +139,43 @@ export default async function EquipoDetailPage({ params }: Props) {
             </Card>
           ) : null}
 
+          {equipo.medidores.length > 0 ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <CardTitle>Medidores HVAC</CardTitle>
+                <Link href={`/medidores?equipo=${equipo.id}`} className="text-sm text-[#2563EB] hover:underline">
+                  Ver todos
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {equipo.medidores.map((medidor) => {
+                  const overdue = isMedidorOverdue(medidor.proximaLecturaAt);
+                  return (
+                    <Link
+                      key={medidor.id}
+                      href={`/medidores?id=${medidor.id}`}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 p-3 hover:border-blue-200"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{medidor.nombre}</p>
+                        <p className="text-xs text-gray-500">
+                          {unidadMedidorLabels[medidor.unidad]} ·{" "}
+                          {frecuenciaLecturaLabels[medidor.frecuencia]}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {overdue ? <Badge variant="danger">Vencida</Badge> : null}
+                        <span className="text-sm text-gray-600">
+                          {formatLecturaValor(medidor.ultimaLectura, medidor.unidad)}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle>Últimos mantenimientos</CardTitle>
@@ -178,9 +223,7 @@ export default async function EquipoDetailPage({ params }: Props) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={qr} alt={`QR ${equipo.codigoQr}`} className="mx-auto rounded border" />
               ) : null}
-              <p className="mt-3 text-xs text-gray-500">
-                Escaneo simulado — /consulta/{equipo.codigoQr}
-              </p>
+              <p className="mt-3 text-xs text-gray-500">/consulta/{equipo.codigoQr}</p>
             </CardContent>
           </Card>
 
@@ -201,7 +244,7 @@ export default async function EquipoDetailPage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {user.rol === "ADMINISTRADOR" ? (
+          {(user.rol === "ADMINISTRADOR" || canReportAlertas(user.rol)) ? (
             <Card>
               <CardHeader>
                 <CardTitle>Reportar alerta</CardTitle>

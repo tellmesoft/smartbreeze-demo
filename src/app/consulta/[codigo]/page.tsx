@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportarAlertaForm } from "@/components/alertas/reportar-alerta-form";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { prisma } from "@/lib/prisma";
 import { estadoEquipoLabels } from "@/lib/navigation";
 import { estadoEquipoVariant } from "@/lib/status-badges";
@@ -31,24 +32,22 @@ export default async function ConsultaQrPage({ params }: Props) {
   const qr = base64ToDataUrl(equipo.qrBase64);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-50 to-blue-50 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
-      <div className="mx-auto max-w-lg space-y-4">
-        <header className="sticky top-0 z-10 -mx-4 border-b border-white/60 bg-gradient-to-b from-slate-50/95 to-transparent px-4 pb-4 pt-2 backdrop-blur-sm">
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2563EB] text-lg font-bold text-white shadow-sm">
-              SB
-            </div>
-            <h1 className="text-lg font-bold text-gray-900 sm:text-xl">Consulta de equipo</h1>
-            <p className="text-sm text-gray-500">Vista simulada post-escaneo QR</p>
-          </div>
-        </header>
+    <div className="relative min-h-[100dvh] bg-[#f8fafc] px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="absolute left-4 top-4 sm:left-6 sm:top-6">
+        <BrandLogo link={false} priority variant="mark" className="h-14 w-14" />
+      </div>
+
+      <div className="mx-auto max-w-lg space-y-4 pt-20 sm:pt-24">
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Consulta de equipo</h1>
+          <p className="mt-1 text-sm text-gray-500">{equipo.codigoInterno} — {equipo.nombre}</p>
+        </div>
 
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <CardTitle className="text-lg">Equipo: {equipo.codigoInterno}</CardTitle>
-                <p className="mt-1 text-sm text-gray-500">{equipo.nombre}</p>
+                <CardTitle className="text-lg">Estado operativo</CardTitle>
               </div>
               <Badge variant={estadoEquipoVariant(equipo.estado)} className="w-fit">
                 {estadoEquipoLabels[equipo.estado]}
@@ -97,9 +96,6 @@ export default async function ConsultaQrPage({ params }: Props) {
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Reportar falla</CardTitle>
-            <p className="text-sm text-gray-500">
-              Describí el problema para que el equipo técnico lo revise.
-            </p>
           </CardHeader>
           <CardContent>
             <ReportarAlertaForm codigoInterno={equipo.codigoInterno} compact />

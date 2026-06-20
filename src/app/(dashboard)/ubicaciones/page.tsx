@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { UbicacionesWorkspace } from "@/components/ubicaciones/ubicaciones-workspace";
 import type { UbicacionDetailData } from "@/components/ubicaciones/ubicacion-detail";
-import { requireSession } from "@/lib/auth";
+import { requireModule } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { EstadoEquipo } from "@/generated/prisma/client";
 
@@ -59,7 +59,7 @@ function mapUbicacion(
 }
 
 export default async function UbicacionesPage({ searchParams }: Props) {
-  await requireSession(["ADMINISTRADOR"]);
+  await requireModule("ubicaciones");
   const params = await searchParams;
 
   const ubicaciones = await prisma.ubicacion.findMany({
@@ -94,10 +94,7 @@ export default async function UbicacionesPage({ searchParams }: Props) {
 
   return (
     <div>
-      <PageHeader
-        title="Ubicaciones"
-        description="Jerarquía institucional: facultad → edificio → piso / sala."
-      />
+      <PageHeader title="Ubicaciones" />
 
       <UbicacionesWorkspace
         ubicaciones={listItems}

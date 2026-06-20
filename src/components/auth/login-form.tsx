@@ -13,8 +13,8 @@ const demoAccounts = [
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@smartbreeze.local");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +30,7 @@ export function LoginForm() {
     });
 
     if (!res.ok) {
-      setError("Credenciales inválidas. Usá las cuentas demo.");
+      setError("Credenciales inválidas.");
       setLoading(false);
       return;
     }
@@ -78,8 +78,8 @@ export function LoginForm() {
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Ingresando..." : "Ingresar al demo"}
+      <Button type="submit" className="w-full" loading={loading} loadingText="Ingresando...">
+        Ingresar
       </Button>
     </form>
   );

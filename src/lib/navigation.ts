@@ -3,18 +3,34 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
+  ClipboardList,
+  Gauge,
   LayoutDashboard,
+  Package,
+  Truck,
   Users,
   Wrench,
   Wind,
 } from "lucide-react";
+import { moduleRoles, type AppModule } from "@/lib/permissions";
+
+export type NavGroup = "inicio" | "operacion" | "preventivo" | "inventario" | "administracion";
+
+export const navGroupLabels: Record<NavGroup, string> = {
+  inicio: "Inicio",
+  operacion: "Operación",
+  preventivo: "Preventivo",
+  inventario: "Inventario",
+  administracion: "Administración",
+};
 
 export type NavItem = {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
-  roles: Rol[];
-  badgeKey?: "mantenimientos" | "alertas";
+  module: AppModule;
+  group: NavGroup;
+  badgeKey?: "mantenimientos" | "alertas" | "repuestos" | "medidores";
 };
 
 export const navItems: NavItem[] = [
@@ -22,47 +38,88 @@ export const navItems: NavItem[] = [
     href: "/dashboard",
     label: "Panel",
     icon: LayoutDashboard,
-    roles: ["ADMINISTRADOR", "TECNICO", "ENCARGADO"],
-  },
-  {
-    href: "/equipos",
-    label: "Equipos HVAC",
-    icon: Wind,
-    roles: ["ADMINISTRADOR", "TECNICO"],
-  },
-  {
-    href: "/mantenimientos",
-    label: "Mantenimientos",
-    icon: Wrench,
-    roles: ["ADMINISTRADOR", "TECNICO"],
-    badgeKey: "mantenimientos",
+    module: "dashboard",
+    group: "inicio",
   },
   {
     href: "/alertas",
     label: "Alertas",
     icon: AlertTriangle,
-    roles: ["ADMINISTRADOR", "TECNICO", "ENCARGADO"],
+    module: "alertas",
+    group: "operacion",
     badgeKey: "alertas",
+  },
+  {
+    href: "/mantenimientos",
+    label: "Mantenimientos",
+    icon: Wrench,
+    module: "mantenimientos",
+    group: "operacion",
+    badgeKey: "mantenimientos",
+  },
+  {
+    href: "/equipos",
+    label: "Equipos HVAC",
+    icon: Wind,
+    module: "equipos",
+    group: "operacion",
+  },
+  {
+    href: "/medidores",
+    label: "Medidores",
+    icon: Gauge,
+    module: "medidores",
+    group: "preventivo",
+    badgeKey: "medidores",
+  },
+  {
+    href: "/procedimientos",
+    label: "Procedimientos",
+    icon: ClipboardList,
+    module: "procedimientos",
+    group: "preventivo",
+  },
+  {
+    href: "/repuestos",
+    label: "Repuestos",
+    icon: Package,
+    module: "repuestos",
+    group: "inventario",
+    badgeKey: "repuestos",
+  },
+  {
+    href: "/proveedores",
+    label: "Proveedores",
+    icon: Truck,
+    module: "proveedores",
+    group: "inventario",
   },
   {
     href: "/ubicaciones",
     label: "Ubicaciones",
     icon: Building2,
-    roles: ["ADMINISTRADOR"],
+    module: "ubicaciones",
+    group: "administracion",
   },
   {
     href: "/usuarios",
     label: "Usuarios",
     icon: Users,
-    roles: ["ADMINISTRADOR"],
+    module: "usuarios",
+    group: "administracion",
   },
   {
     href: "/reportes",
     label: "Reportes",
     icon: BarChart3,
-    roles: ["ADMINISTRADOR"],
+    module: "reportes",
+    group: "administracion",
   },
 ];
+
+export function navItemsForRole(rol: Rol): NavItem[] {
+  return navItems.filter((item) => moduleRoles[item.module].includes(rol));
+}
 
 export const rolLabels: Record<Rol, string> = {
   ADMINISTRADOR: "Administrador",

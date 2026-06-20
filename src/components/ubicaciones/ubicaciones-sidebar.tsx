@@ -19,6 +19,7 @@ type UbicacionesSidebarProps = {
   facultades: string[];
   selectedId?: string;
   selectedFacultad?: string;
+  onNavigate?: (href: string) => void;
 };
 
 export function UbicacionesSidebar({
@@ -26,9 +27,15 @@ export function UbicacionesSidebar({
   facultades,
   selectedId,
   selectedFacultad,
+  onNavigate,
 }: UbicacionesSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  function navigate(href: string) {
+    if (onNavigate) onNavigate(href);
+    else router.push(href);
+  }
 
   function buildHref(updates: { facultad?: string; id?: string }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -59,7 +66,7 @@ export function UbicacionesSidebar({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => router.push(buildHref({ facultad: "" }))}
+            onClick={() => navigate(buildHref({ facultad: "" }))}
             className={cn(
               "rounded-full border px-3 py-1 text-xs",
               !selectedFacultad
@@ -73,7 +80,7 @@ export function UbicacionesSidebar({
             <button
               key={f}
               type="button"
-              onClick={() => router.push(buildHref({ facultad: f }))}
+              onClick={() => navigate(buildHref({ facultad: f }))}
               className={cn(
                 "rounded-full border px-3 py-1 text-xs",
                 selectedFacultad === f

@@ -10,9 +10,9 @@ Guía paso a paso para mostrar el demo Smartbreeze HVAC a un cliente institucion
 
 | Rol | Email | Contraseña | Uso en la demo |
 |---|---|---|---|
-| **Administrador** | `admin@smartbreeze.local` | `demo123` | Visión global, reportes, equipos, alertas |
-| **Técnico** | `tecnico@smartbreeze.local` | `demo123` | Mantenimientos asignados, resolución operativa |
-| **Encargado de Facultad** | `encargado@smartbreeze.local` | `demo123` | Consulta QR y reporte de fallas |
+| **Administrador** | `admin@smartbreeze.local` | `sbi2026` | Visión global, reportes, equipos, alertas |
+| **Técnico** | `tecnico@smartbreeze.local` | `sbi2026` | Mantenimientos asignados, resolución operativa |
+| **Encargado de Facultad** | `encargado@smartbreeze.local` | `sbi2026` | Consulta QR y reporte de fallas |
 
 **Equipo de referencia QR:** `SBI-0048` → `/consulta/SBI-0048`
 
@@ -23,7 +23,7 @@ Guía paso a paso para mostrar el demo Smartbreeze HVAC a un cliente institucion
 ### 1. Contexto y login Admin (1 min)
 
 1. Abrir `/login`.
-2. Ingresar **admin@smartbreeze.local** / **demo123**.
+2. Ingresar **admin@smartbreeze.local** / **sbi2026**.
 3. **Mensaje clave:** *“La plataforma centraliza el inventario HVAC institucional con roles diferenciados: administración, técnicos y encargados de facultad.”*
 
 **Pantalla:** Panel operativo (`/dashboard`).
@@ -88,7 +88,7 @@ Guía paso a paso para mostrar el demo Smartbreeze HVAC a un cliente institucion
 ### 6. Vista Encargado — Consulta QR (1,5 min)
 
 1. Cerrar sesión (botón en sidebar).
-2. Login **encargado@smartbreeze.local** / **demo123**.
+2. Login **encargado@smartbreeze.local** / **sbi2026**.
 3. En el dashboard, sección **Consulta QR simulada**:
    - Elegir **SBI-0048** en el dropdown **o** clic en **Demo SBI-0048**.
 4. **Ruta pública:** `/consulta/SBI-0048` (sin login completo).
@@ -106,7 +106,7 @@ Volver a **Alertas** como encargado para ver el formulario de reporte desde el p
 ### 7. Vista Técnico (1 min)
 
 1. Cerrar sesión.
-2. Login **tecnico@smartbreeze.local** / **demo123**.
+2. Login **tecnico@smartbreeze.local** / **sbi2026**.
 
 - Dashboard: solo sus KPIs y mantenimientos relevantes.
 - **Mantenimientos:** pestaña Pendientes → sección **Asignados a ti**.

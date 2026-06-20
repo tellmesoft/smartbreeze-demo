@@ -50,6 +50,49 @@ enum EstadoAlerta {
   RESUELTA
 }
 
+enum TipoRepuesto {
+  FILTRO
+  REFRIGERANTE
+  CONTROL
+  MOTOR
+  ELECTRICO
+  OTRO
+}
+
+enum TipoMovimientoRepuesto {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum ResultadoInspeccion {
+  PASS
+  FLAG
+  FAIL
+}
+
+enum UnidadMedidor {
+  HORAS
+  KWH
+  PSI
+  AMPERIOS
+  CELSIUS
+  DELTA_T
+}
+
+enum FrecuenciaLectura {
+  DIARIA
+  SEMANAL
+  MENSUAL
+}
+
+enum TipoProveedor {
+  REPUESTOS
+  REFRIGERANTE
+  SERVICIO_TECNICO
+  CONTRATISTA
+}
+
 model Usuario {
   id             String          @id @default(cuid())
   nombre         String
@@ -61,6 +104,8 @@ model Usuario {
   equipos        Equipo[]        @relation("TecnicoAsignado")
   mantenimientos Mantenimiento[] @relation("TecnicoMantenimiento")
   alertas        Alerta[]        @relation("ReportadoPor")
+  procedimientos Procedimiento[] @relation("ProcedimientoCreador")
+  proveedores    Proveedor[]     @relation("ProveedorCreador")
 
   @@map("usuarios")
 }
@@ -105,6 +150,8 @@ model Equipo {
   tecnico               Usuario?         @relation("TecnicoAsignado", fields: [tecnicoId], references: [id])
   mantenimientos        Mantenimiento[]
   alertas               Alerta[]
+  repuestos             Repuesto[]
+  medidores             Medidor[]
   createdAt             DateTime         @default(now()) @map("created_at")
 
   @@map("equipos")
@@ -124,11 +171,18 @@ model Mantenimiento {
   estado                EstadoMantenimiento    @default(PENDIENTE)
   prioridad             Prioridad              @default(MEDIA)
   recurrencia           String?
-  equipo                Equipo                 @relation(fields: [equipoId], references: [id], onDelete: Cascade)
-  tecnico               Usuario                @relation("TecnicoMantenimiento", fields: [tecnicoId], references: [id])
+  procedimientoId       String?                    @map("procedimiento_id")
+  proveedorId           String?                    @map("proveedor_id")
+  resultadoInspeccion   ResultadoInspeccion?       @map("resultado_inspeccion")
+  firmaSupervisorBase64 String?                    @map("firma_supervisor_base64")
+  equipo                Equipo                     @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tecnico               Usuario                    @relation("TecnicoMantenimiento", fields: [tecnicoId], references: [id])
+  procedimiento         Procedimiento?             @relation(fields: [procedimientoId], references: [id], onDelete: SetNull)
+  proveedor             Proveedor?                 @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
   parametrosHvac        ParametrosHvac?
   esterilizacion        Esterilizacion?
   evidencia             EvidenciaMantenimiento?
+  respuestasProcedimiento ProcedimientoItemRespuesta[]
 
   @@map("mantenimientos")
 }
@@ -186,4 +240,121 @@ model Alerta {
   usuario      Usuario      @relation("ReportadoPor", fields: [reportadoPor], references: [id])
 
   @@map("alertas")
+}
+
+model Repuesto {
+  id                 String                 @id @default(cuid())
+  codigoInterno      String                 @unique @map("codigo_interno")
+  nombre             String
+  descripcion        String?
+  tipo               TipoRepuesto           @default(OTRO)
+  cantidadDisponible Int                    @default(0) @map("cantidad_disponible")
+  cantidadMinima     Int                    @default(1) @map("cantidad_minima")
+  cantidadPedida     Int                    @default(0) @map("cantidad_pedida")
+  costoUnitario      Float?                 @map("costo_unitario")
+  proveedorId        String?                @map("proveedor_id")
+  ubicacionAlmacen   String?                @map("ubicacion_almacen")
+  fotoBase64         String?                @map("foto_base64")
+  qrBase64           String?                @map("qr_base64")
+  equipoId           String?                @map("equipo_id")
+  equipo             Equipo?                @relation(fields: [equipoId], references: [id], onDelete: SetNull)
+  proveedor          Proveedor?             @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+  movimientos        MovimientoRepuesto[]
+  createdAt          DateTime               @default(now()) @map("created_at")
+
+  @@map("repuestos")
+}
+
+model MovimientoRepuesto {
+  id                 String                 @id @default(cuid())
+  repuestoId         String                 @map("repuesto_id")
+  tipo               TipoMovimientoRepuesto
+  cantidad           Int
+  cantidadResultante Int                    @map("cantidad_resultante")
+  observaciones      String?
+  fecha              DateTime               @default(now())
+  repuesto           Repuesto               @relation(fields: [repuestoId], references: [id], onDelete: Cascade)
+
+  @@map("movimientos_repuesto")
+}
+
+model Procedimiento {
+  id             String              @id @default(cuid())
+  titulo         String
+  descripcion    String?
+  tipoEquipo     TipoEquipo?         @map("tipo_equipo")
+  creadoPorId    String?             @map("creado_por_id")
+  creadoPor      Usuario?            @relation("ProcedimientoCreador", fields: [creadoPorId], references: [id], onDelete: SetNull)
+  items          ProcedimientoItem[]
+  mantenimientos Mantenimiento[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+
+  @@map("procedimientos")
+}
+
+model ProcedimientoItem {
+  id              String                       @id @default(cuid())
+  procedimientoId String                       @map("procedimiento_id")
+  orden           Int
+  seccion         String?
+  titulo          String
+  procedimiento   Procedimiento                @relation(fields: [procedimientoId], references: [id], onDelete: Cascade)
+  respuestas      ProcedimientoItemRespuesta[]
+
+  @@map("procedimiento_items")
+}
+
+model ProcedimientoItemRespuesta {
+  mantenimientoId     String            @map("mantenimiento_id")
+  procedimientoItemId String            @map("procedimiento_item_id")
+  completado          Boolean           @default(false)
+  mantenimiento       Mantenimiento     @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+  item                ProcedimientoItem @relation(fields: [procedimientoItemId], references: [id], onDelete: Cascade)
+
+  @@id([mantenimientoId, procedimientoItemId])
+  @@map("procedimiento_item_respuestas")
+}
+
+model Medidor {
+  id               String            @id @default(cuid())
+  nombre             String
+  unidad             UnidadMedidor
+  frecuencia         FrecuenciaLectura @default(SEMANAL)
+  ultimaLectura      Float?            @map("ultima_lectura")
+  ultimaLecturaAt    DateTime?         @map("ultima_lectura_at")
+  proximaLecturaAt   DateTime?         @map("proxima_lectura_at")
+  equipoId           String            @map("equipo_id")
+  equipo             Equipo            @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  lecturas           LecturaMedidor[]
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  @@map("medidores")
+}
+
+model LecturaMedidor {
+  id            String   @id @default(cuid())
+  medidorId     String   @map("medidor_id")
+  valor         Float
+  fecha         DateTime @default(now())
+  observaciones String?
+  medidor       Medidor  @relation(fields: [medidorId], references: [id], onDelete: Cascade)
+
+  @@map("lecturas_medidor")
+}
+
+model Proveedor {
+  id             String         @id @default(cuid())
+  nombre         String
+  descripcion    String?
+  tipo           TipoProveedor  @default(REPUESTOS)
+  email          String?
+  telefono       String?
+  creadoPorId    String?        @map("creado_por_id")
+  creadoPor      Usuario?       @relation("ProveedorCreador", fields: [creadoPorId], references: [id], onDelete: SetNull)
+  repuestos      Repuesto[]
+  mantenimientos Mantenimiento[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@map("proveedores")
 }

@@ -2,8 +2,18 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Rol } from "@/generated/prisma/client";
+import { canAccessModule, moduleRoles, type AppModule } from "@/lib/permissions";
 
 export const SESSION_COOKIE = "smartbreeze_demo_session";
+
+export function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+  };
+}
 
 export type SessionUser = {
   id: string;
@@ -47,6 +57,18 @@ export async function requireSession(allowedRoles?: Rol[]) {
   }
   return user;
 }
+
+/** Protege una ruta según el módulo definido en `permissions.ts`. */
+export async function requireModule(module: AppModule) {
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+  if (!canAccessModule(user.rol, module)) {
+    redirect("/dashboard");
+  }
+  return user;
+}
+
+export { canAccessModule, moduleRoles };
 
 export async function loginDemoUser(email: string, password: string) {
   const user = await prisma.usuario.findUnique({ where: { email } });

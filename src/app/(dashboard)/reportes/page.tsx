@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { requireSession } from "@/lib/auth";
+import { ReportesPageSkeleton } from "@/components/ui/loading";
+import { requireModule } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   estadoEquipoLabels,
@@ -29,7 +30,7 @@ function inRange(date: Date, desde: Date | null, hasta: Date | null) {
 }
 
 export default async function ReportesPage({ searchParams }: Props) {
-  await requireSession(["ADMINISTRADOR"]);
+  await requireModule("reportes");
   const params = await searchParams;
   const desde = params.desde ? parseDateStart(params.desde) : null;
   const hasta = params.hasta ? parseDateEnd(params.hasta) : null;
@@ -87,7 +88,7 @@ export default async function ReportesPage({ searchParams }: Props) {
   const completados = mantenimientos.filter((m) => m.estado === "COMPLETADO").length;
 
   return (
-    <Suspense fallback={<div className="h-96 animate-pulse rounded-lg bg-gray-100" />}>
+    <Suspense fallback={<ReportesPageSkeleton />}>
       <ReportesClient
         mantenimientosPorEstado={countBy(
           mantenimientos,

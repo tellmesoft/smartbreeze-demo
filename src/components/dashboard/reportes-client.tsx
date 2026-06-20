@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   Bar,
@@ -17,8 +17,10 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { AsyncContent } from "@/components/ui/loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 
 type ReportesClientProps = {
   mantenimientosPorEstado: { name: string; value: number; color: string }[];
@@ -47,7 +49,7 @@ export function ReportesClient({
   resumen,
   filtros,
 }: ReportesClientProps) {
-  const router = useRouter();
+  const { isPending, push } = usePendingRouter();
   const searchParams = useSearchParams();
   const [desde, setDesde] = useState(filtros.desde);
   const [hasta, setHasta] = useState(filtros.hasta);
@@ -63,21 +65,19 @@ export function ReportesClient({
     else params.delete("desde");
     if (hasta) params.set("hasta", hasta);
     else params.delete("hasta");
-    router.push(`/reportes?${params.toString()}`);
+    push(`/reportes?${params.toString()}`);
   }
 
   function clearFiltro() {
     setDesde("");
     setHasta("");
-    router.push("/reportes");
+    push("/reportes");
   }
 
   return (
+    <AsyncContent pending={isPending} label="Cargando reportes...">
     <div>
-      <PageHeader
-        title="Reportes"
-        description="Panel administrativo con métricas clave del estado operativo."
-      />
+      <PageHeader title="Reportes" />
 
       <Card className="mb-6">
         <CardHeader>
@@ -104,10 +104,10 @@ export function ReportesClient({
               />
             </div>
             <div className="flex gap-2">
-              <Button type="button" onClick={applyFiltro}>
+              <Button type="button" onClick={applyFiltro} loading={isPending} loadingText="Aplicando...">
                 Aplicar
               </Button>
-              <Button type="button" variant="outline" onClick={clearFiltro}>
+              <Button type="button" variant="outline" onClick={clearFiltro} disabled={isPending}>
                 Limpiar
               </Button>
             </div>
@@ -199,6 +199,7 @@ export function ReportesClient({
         </ChartCard>
       </div>
     </div>
+    </AsyncContent>
   );
 }
 

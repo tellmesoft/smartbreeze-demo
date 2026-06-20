@@ -124,8 +124,8 @@ export function ReportarAlertaForm({
         <p className="text-sm text-green-600">Alerta reportada correctamente.</p>
       ) : null}
 
-      <Button type="submit" disabled={loading} className={compact ? "w-full" : ""}>
-        {loading ? "Enviando..." : "Reportar alerta"}
+      <Button type="submit" disabled={loading} loading={loading} loadingText="Enviando..." className={compact ? "w-full" : ""}>
+        Reportar alerta
       </Button>
     </form>
   );

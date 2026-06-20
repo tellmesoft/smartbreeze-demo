@@ -170,8 +170,8 @@ export function NuevoEquipoForm({ ubicaciones, tecnicos }: NuevoEquipoFormProps)
         <Button type="button" variant="outline" onClick={() => router.push("/equipos")}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Creando..." : "Crear equipo"}
+        <Button type="submit" disabled={loading} loading={loading} loadingText="Creando...">
+          Crear equipo
         </Button>
       </div>
     </form>

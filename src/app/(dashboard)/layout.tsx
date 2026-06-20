@@ -1,4 +1,6 @@
 import { requireSession } from "@/lib/auth";
+import { isMedidorOverdue } from "@/lib/medidores";
+import { mantenimientosScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
@@ -9,11 +11,11 @@ export default async function DashboardLayout({
 }) {
   const user = await requireSession();
 
-  const [mantenimientosPendientes, alertasAbiertas] = await Promise.all([
+  const [mantenimientosPendientes, alertasAbiertas, repuestos, medidores] = await Promise.all([
     prisma.mantenimiento.count({
       where: {
         estado: { in: ["PENDIENTE", "EN_PROGRESO", "EN_ESPERA"] },
-        ...(user.rol === "TECNICO" ? { tecnicoId: user.id } : {}),
+        ...mantenimientosScopeForRole(user.rol, user.id),
       },
     }),
     prisma.alerta.count({
@@ -21,7 +23,21 @@ export default async function DashboardLayout({
         estado: { in: ["ABIERTA", "EN_REVISION"] },
       },
     }),
+    prisma.repuesto.findMany({
+      select: { cantidadDisponible: true, cantidadMinima: true },
+    }),
+    prisma.medidor.findMany({
+      select: { proximaLecturaAt: true },
+    }),
   ]);
+
+  const repuestosBajoStock = repuestos.filter(
+    (r) => r.cantidadDisponible <= r.cantidadMinima
+  ).length;
+
+  const medidoresVencidos = medidores.filter((m) =>
+    isMedidorOverdue(m.proximaLecturaAt)
+  ).length;
 
   return (
     <DashboardShell
@@ -29,6 +45,8 @@ export default async function DashboardLayout({
       badges={{
         mantenimientos: mantenimientosPendientes,
         alertas: alertasAbiertas,
+        repuestos: repuestosBajoStock,
+        medidores: medidoresVencidos,
       }}
     >
       {children}

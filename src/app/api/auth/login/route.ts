@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { loginDemoUser, SESSION_COOKIE } from "@/lib/auth";
+import { loginDemoUser, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -13,11 +13,7 @@ export async function POST(request: Request) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, user.id, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  });
+  cookieStore.set(SESSION_COOKIE, user.id, sessionCookieOptions());
 
   return NextResponse.json({
     id: user.id,

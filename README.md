@@ -75,15 +75,23 @@ npm run build
 npm start
 ```
 
+### Producción en Vercel (cloud)
+
+Guía paso a paso:
+
+→ **[vercel-deploy-guia.md](./vercel-deploy-guia.md)**
+
+Resumen: conectar repo, Root Directory `Smartbreeze Innovations/demo`, variable `DATABASE_URL` (Render externa), deploy.
+
 ---
 
 ## Credenciales demo
 
-| Rol | Email | Contraseña |
-|---|---|---|
-| **Administrador** | `admin@smartbreeze.local` | `demo123` |
-| **Técnico** | `tecnico@smartbreeze.local` | `demo123` |
-| **Encargado de Facultad** | `encargado@smartbreeze.local` | `demo123` |
+| Rol | Email | Contraseña | Acceso principal |
+|---|---|---|---|
+| **Administrador** | `admin@smartbreeze.local` | `sbi2026` | Todos los módulos |
+| **Técnico** | `tecnico@smartbreeze.local` | `sbi2026` | Equipos asignados, mantenimientos, repuestos, medidores, alertas |
+| **Encargado de Facultad** | `encargado@smartbreeze.local` | `sbi2026` | Panel, alertas, consulta QR |
 
 **Consulta QR de referencia:** [http://localhost:3000/consulta/SBI-0048](http://localhost:3000/consulta/SBI-0048)
 
@@ -97,7 +105,7 @@ Guía detallada con guión, tiempos y mensajes clave:
 
 **Resumen rápido:**
 
-1. **Admin** → Dashboard (KPIs) → Reportes → Equipos (SBI-0048) → Mantenimientos → Alertas
+1. **Admin** → Dashboard (KPIs) → Reportes → Equipos (SBI-0048) → Repuestos → Proveedores → Medidores → Mantenimientos → Alertas
 2. **Encargado** → Consulta QR `/consulta/SBI-0048` → Reportar falla
 3. **Técnico** → Mantenimientos asignados
 
@@ -105,17 +113,21 @@ Guía detallada con guión, tiempos y mensajes clave:
 
 ## Módulos del demo
 
-| Módulo | Ruta | Roles |
-|---|---|---|
-| Login | `/login` | Todos |
-| Panel operativo | `/dashboard` | Todos |
-| Equipos HVAC | `/equipos` | Admin, Técnico |
-| Mantenimientos | `/mantenimientos` | Admin, Técnico |
-| Alertas | `/alertas` | Todos (permisos distintos) |
-| Ubicaciones | `/ubicaciones` | Admin |
-| Usuarios | `/usuarios` | Admin |
-| Reportes | `/reportes` | Admin |
-| Consulta QR | `/consulta/[codigo]` | Público (sin login) |
+| Módulo | Ruta | Admin | Técnico | Encargado |
+|---|---|:---:|:---:|:---:|
+| Login | `/login` | ✅ | ✅ | ✅ |
+| Panel operativo | `/dashboard` | ✅ | ✅ | ✅ |
+| Equipos HVAC | `/equipos` | ✅ | ✅ asignados | — |
+| Mantenimientos | `/mantenimientos` | ✅ | ✅ asignados | — |
+| Repuestos | `/repuestos` | ✅ | ✅ | — |
+| Proveedores | `/proveedores` | ✅ | ✅ lectura | — |
+| Procedimientos | `/procedimientos` | ✅ | ✅ lectura | — |
+| Medidores | `/medidores` | ✅ | ✅ | — |
+| Alertas | `/alertas` | ✅ | ✅ | ✅ |
+| Ubicaciones | `/ubicaciones` | ✅ | — | — |
+| Usuarios | `/usuarios` | ✅ | — | — |
+| Reportes | `/reportes` | ✅ | — | — |
+| Consulta QR | `/consulta/[codigo]` | ✅ | ✅ | ✅ |
 
 ---
 
@@ -168,6 +180,7 @@ demo/
 |---|---|
 | [docs/FLUJO-DEMO.md](./docs/FLUJO-DEMO.md) | Guión de presentación 5–10 min |
 | [docs/DATABASE.md](./docs/DATABASE.md) | PostgreSQL Render + Docker |
+| [vercel-deploy-guia.md](./vercel-deploy-guia.md) | Despliegue en Vercel |
 | [../checklist.md](../checklist.md) | Plan de desarrollo por fases |
 | [../modelo-datos.md](../modelo-datos.md) | Modelo funcional ↔ Prisma |
 | [../guia.md](../guia.md) | Alcance demo vs proyecto real |

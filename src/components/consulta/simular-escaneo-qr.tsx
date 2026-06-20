@@ -27,7 +27,7 @@ export function SimularEscaneoQr({ equipos }: Props) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div className="flex-1">
-        <Label htmlFor="simular-qr">Simular escaneo QR</Label>
+        <Label htmlFor="simular-qr">Consulta por equipo</Label>
         <Select
           id="simular-qr"
           defaultValue=""
@@ -48,7 +48,7 @@ export function SimularEscaneoQr({ equipos }: Props) {
         onClick={() => handleScan("SBI-0048")}
       >
         <QrCode className="mr-2 h-4 w-4" />
-        Demo SBI-0048
+        SBI-0048
       </Button>
     </div>
   );

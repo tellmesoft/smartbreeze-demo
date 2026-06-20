@@ -1,15 +1,18 @@
 import { Suspense } from "react";
+import { MasterDetailPageSkeleton } from "@/components/ui/loading";
 import { PageHeader } from "@/components/layout/page-header";
 import { AlertasWorkspace } from "@/components/alertas/alertas-workspace";
-import { requireSession } from "@/lib/auth";
+import { requireModule } from "@/lib/auth";
+import { canManageAlertas, canReportAlertas } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { formatDateTime } from "@/lib/utils";
 
 type Props = {
   searchParams: Promise<{ filtro?: string }>;
 };
 
 export default async function AlertasPage({ searchParams }: Props) {
-  const user = await requireSession();
+  const user = await requireModule("alertas");
   const params = await searchParams;
   const filtro =
     params.filtro === "resueltas" ? "resueltas" : params.filtro === "todas" ? "todas" : "abiertas";
@@ -30,12 +33,9 @@ export default async function AlertasPage({ searchParams }: Props) {
 
   return (
     <div>
-      <PageHeader
-        title="Alertas"
-        description="Incidencias y fallas reportadas por encargados y personal operativo."
-      />
+      <PageHeader title="Alertas" />
 
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-gray-100" />}>
+      <Suspense fallback={<MasterDetailPageSkeleton filters={false} />}>
         <AlertasWorkspace
           alertas={alertas.map((a) => ({
             id: a.id,
@@ -43,6 +43,7 @@ export default async function AlertasPage({ searchParams }: Props) {
             prioridad: a.prioridad,
             estado: a.estado,
             fecha: a.fecha.toISOString(),
+            fechaLabel: formatDateTime(a.fecha),
             equipoNombre: a.equipo.nombre,
             equipoCodigo: a.equipo.codigoInterno,
             ubicacion: `${a.equipo.ubicacion.edificio} — ${a.equipo.ubicacion.nombre}`,
@@ -54,8 +55,8 @@ export default async function AlertasPage({ searchParams }: Props) {
             codigoInterno: e.codigoInterno,
           }))}
           userRol={user.rol}
-          canManage={user.rol === "ADMINISTRADOR" || user.rol === "TECNICO"}
-          canReport={user.rol === "ENCARGADO" || user.rol === "ADMINISTRADOR"}
+          canManage={canManageAlertas(user.rol)}
+          canReport={canReportAlertas(user.rol)}
           initialFiltro={filtro}
         />
       </Suspense>

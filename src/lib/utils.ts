@@ -5,24 +5,43 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string | null | undefined) {
+/** Zona horaria institucional del demo (Chile). */
+export const APP_TIME_ZONE = "America/Santiago";
+
+function formatDateParts(
+  date: Date | string | null | undefined,
+  includeTime: boolean
+): string {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
+
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "—";
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: APP_TIME_ZONE,
     year: "numeric",
-  }).format(new Date(date));
+    month: "2-digit",
+    day: "2-digit",
+    ...(includeTime
+      ? { hour: "2-digit", minute: "2-digit", hour12: false }
+      : {}),
+  }).formatToParts(value);
+
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  const dateStr = `${part("day")}/${part("month")}/${part("year")}`;
+  if (!includeTime) return dateStr;
+
+  return `${dateStr}, ${part("hour")}:${part("minute")}`;
+}
+
+export function formatDate(date: Date | string | null | undefined) {
+  return formatDateParts(date, false);
 }
 
 export function formatDateTime(date: Date | string | null | undefined) {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
+  return formatDateParts(date, true);
 }
 
 export function base64ToDataUrl(base64: string | null | undefined, mime = "image/svg+xml") {

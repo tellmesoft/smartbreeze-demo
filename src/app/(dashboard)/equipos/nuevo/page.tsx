@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NuevoEquipoForm } from "@/components/equipos/nuevo-equipo-form";
-import { requireSession } from "@/lib/auth";
+import { requireModule } from "@/lib/auth";
+import { canCreateCatalog } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 export default async function NuevoEquipoPage() {
-  await requireSession(["ADMINISTRADOR"]);
+  const user = await requireModule("equipos");
+  if (!canCreateCatalog(user.rol)) redirect("/equipos");
 
   const [ubicaciones, tecnicos] = await Promise.all([
     prisma.ubicacion.findMany({ orderBy: [{ facultad: "asc" }, { edificio: "asc" }] }),
@@ -24,10 +27,7 @@ export default async function NuevoEquipoPage() {
         Volver a equipos
       </Link>
 
-      <PageHeader
-        title="Nuevo equipo HVAC"
-        description="Alta de unidad con ubicación, datos técnicos y generación automática de QR."
-      />
+      <PageHeader title="Nuevo equipo HVAC" />
 
       <Card className="max-w-3xl">
         <CardHeader>

@@ -1,14 +1,16 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AsyncContent } from "@/components/ui/loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReportarAlertaForm } from "@/components/alertas/reportar-alerta-form";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 import { estadoAlertaLabels, prioridadLabels } from "@/lib/navigation";
 import { estadoAlertaVariant, prioridadVariant } from "@/lib/status-badges";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { EstadoAlerta, Prioridad, Rol } from "@/generated/prisma/client";
 
 export type AlertaRow = {
@@ -17,6 +19,7 @@ export type AlertaRow = {
   prioridad: Prioridad;
   estado: EstadoAlerta;
   fecha: string;
+  fechaLabel: string;
   equipoNombre: string;
   equipoCodigo: string;
   ubicacion: string;
@@ -40,7 +43,7 @@ export function AlertasWorkspace({
   canReport,
   initialFiltro,
 }: Props) {
-  const router = useRouter();
+  const { isPending: isNavigating, push, refresh } = usePendingRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
@@ -56,7 +59,7 @@ export function AlertasWorkspace({
   function setFiltro(next: "abiertas" | "todas" | "resueltas") {
     const params = new URLSearchParams(searchParams.toString());
     params.set("filtro", next);
-    router.push(`/alertas?${params.toString()}`);
+    push(`/alertas?${params.toString()}`);
   }
 
   async function updateEstado(id: string, estado: EstadoAlerta) {
@@ -66,11 +69,14 @@ export function AlertasWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
       });
-      router.refresh();
+      refresh();
     });
   }
 
+  const isLoading = pending || isNavigating;
+
   return (
+    <AsyncContent pending={isLoading} label={pending ? "Actualizando..." : "Cargando..."}>
     <div className="space-y-6">
       {canReport ? (
         <Card>
@@ -121,7 +127,7 @@ export function AlertasWorkspace({
                     <p className="text-sm text-gray-500">{alerta.ubicacion}</p>
                     <p className="mt-2 text-sm text-gray-700">{alerta.descripcion}</p>
                     <p className="mt-2 text-xs text-gray-400">
-                      Reportado por {alerta.reportadoPor} — {formatDateTime(alerta.fecha)}
+                      Reportado por {alerta.reportadoPor} — {alerta.fechaLabel}
                     </p>
                   </div>
 
@@ -142,6 +148,7 @@ export function AlertasWorkspace({
                             size="sm"
                             variant="outline"
                             disabled={pending}
+                            loading={pending}
                             onClick={() => updateEstado(alerta.id, "EN_REVISION")}
                           >
                             En revisión
@@ -150,6 +157,8 @@ export function AlertasWorkspace({
                         <Button
                           size="sm"
                           disabled={pending}
+                          loading={pending}
+                          loadingText="Guardando..."
                           onClick={() => updateEstado(alerta.id, "RESUELTA")}
                         >
                           Marcar resuelta
@@ -162,6 +171,7 @@ export function AlertasWorkspace({
                         size="sm"
                         variant="ghost"
                         disabled={pending}
+                        loading={pending}
                         onClick={() => updateEstado(alerta.id, "ABIERTA")}
                       >
                         Reabrir
@@ -182,5 +192,6 @@ export function AlertasWorkspace({
         </p>
       ) : null}
     </div>
+    </AsyncContent>
   );
 }

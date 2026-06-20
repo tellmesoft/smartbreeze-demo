@@ -1,12 +1,14 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { AsyncContent, MasterDetailPageSkeleton } from "@/components/ui/loading";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { UbicacionesSidebar, type UbicacionListItem } from "@/components/ubicaciones/ubicaciones-sidebar";
 import { UbicacionDetail, type UbicacionDetailData } from "@/components/ubicaciones/ubicacion-detail";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { usePendingRouter } from "@/hooks/use-pending-router";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -26,7 +28,7 @@ function UbicacionesWorkspaceInner({
   detailData,
   desktopFallback,
 }: Props) {
-  const router = useRouter();
+  const { isPending, push } = usePendingRouter();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
@@ -38,10 +40,11 @@ function UbicacionesWorkspaceInner({
     const params = new URLSearchParams(searchParams.toString());
     params.delete("id");
     const qs = params.toString();
-    router.push(qs ? `/ubicaciones?${qs}` : "/ubicaciones");
+    push(qs ? `/ubicaciones?${qs}` : "/ubicaciones");
   }
 
   return (
+    <AsyncContent pending={isPending} label="Cargando...">
     <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
       <Card className={cn("overflow-hidden", !showList && "hidden lg:block")}>
         <div className="border-b border-gray-100 px-4 py-3">
@@ -55,6 +58,7 @@ function UbicacionesWorkspaceInner({
             facultades={facultades}
             selectedId={selectedId ?? desktopFallback?.id}
             selectedFacultad={selectedFacultad}
+            onNavigate={push}
           />
         </div>
       </Card>
@@ -74,12 +78,13 @@ function UbicacionesWorkspaceInner({
         </CardContent>
       </Card>
     </div>
+    </AsyncContent>
   );
 }
 
 export function UbicacionesWorkspace(props: Props) {
   return (
-    <Suspense fallback={<div className="h-96 animate-pulse rounded-lg bg-gray-100" />}>
+    <Suspense fallback={<MasterDetailPageSkeleton filters={false} />}>
       <UbicacionesWorkspaceInner {...props} />
     </Suspense>
   );

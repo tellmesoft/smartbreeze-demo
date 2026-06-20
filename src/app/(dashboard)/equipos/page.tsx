@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EquiposFilters } from "@/components/equipos/equipos-filters";
-import { requireSession } from "@/lib/auth";
+import { FiltersBarSkeleton } from "@/components/ui/loading";
+import { requireModule } from "@/lib/auth";
+import { canCreateCatalog, equiposScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { estadoEquipoLabels } from "@/lib/navigation";
 import { estadoEquipoVariant } from "@/lib/status-badges";
@@ -22,10 +24,12 @@ type Props = {
 };
 
 export default async function EquiposPage({ searchParams }: Props) {
-  const user = await requireSession(["ADMINISTRADOR", "TECNICO"]);
+  const user = await requireModule("equipos");
   const params = await searchParams;
 
-  const where: Prisma.EquipoWhereInput = {};
+  const where: Prisma.EquipoWhereInput = {
+    ...equiposScopeForRole(user.rol, user.id),
+  };
 
   if (params.facultad || params.edificio) {
     where.ubicacion = {
@@ -60,9 +64,8 @@ export default async function EquiposPage({ searchParams }: Props) {
     <div>
       <PageHeader
         title="Equipos HVAC"
-        description="Inventario centralizado de unidades con datos técnicos y estado operativo."
         action={
-          user.rol === "ADMINISTRADOR" ? (
+          canCreateCatalog(user.rol) ? (
             <Link href="/equipos/nuevo">
               <Button>+ Nuevo equipo</Button>
             </Link>
@@ -70,7 +73,7 @@ export default async function EquiposPage({ searchParams }: Props) {
         }
       />
 
-      <Suspense fallback={<div className="mb-4 h-28 animate-pulse rounded-lg bg-gray-100" />}>
+      <Suspense fallback={<FiltersBarSkeleton />}>
         <EquiposFilters
           facultades={facultades}
           edificios={edificios}

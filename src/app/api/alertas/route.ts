@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import type { Prioridad } from "@/generated/prisma/client";
 import { getSessionUser } from "@/lib/auth";
+import { canReportAlertas } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
     }
 
     const sessionUser = await getSessionUser();
+
+    if (sessionUser && !canReportAlertas(sessionUser.rol)) {
+      return NextResponse.json({ error: "No autorizado." }, { status: 403 });
+    }
+
     let reportadoPorId = sessionUser?.id;
     let resolvedEquipoId = equipoId;
 
