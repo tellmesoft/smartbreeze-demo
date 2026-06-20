@@ -15,7 +15,13 @@ export default async function AlertasPage({ searchParams }: Props) {
   const user = await requireModule("alertas");
   const params = await searchParams;
   const filtro =
-    params.filtro === "resueltas" ? "resueltas" : params.filtro === "todas" ? "todas" : "abiertas";
+    params.filtro === "en_revision"
+      ? "en_revision"
+      : params.filtro === "resueltas"
+        ? "resueltas"
+        : params.filtro === "todas"
+          ? "todas"
+          : "abiertas";
 
   const [alertas, equipos] = await Promise.all([
     prisma.alerta.findMany({

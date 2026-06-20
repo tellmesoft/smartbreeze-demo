@@ -28,13 +28,15 @@ export type AlertaRow = {
   reportadoPor: string;
 };
 
+type AlertasFiltro = "abiertas" | "en_revision" | "resueltas" | "todas";
+
 type Props = {
   alertas: AlertaRow[];
   equipos: { id: string; label: string; codigoInterno: string }[];
   userRol: Rol;
   canManage: boolean;
   canReport: boolean;
-  initialFiltro: "abiertas" | "todas" | "resueltas";
+  initialFiltro: AlertasFiltro;
 };
 
 export function AlertasWorkspace({
@@ -50,16 +52,16 @@ export function AlertasWorkspace({
   const [pending, startTransition] = useTransition();
   const [reportOpen, setReportOpen] = useState(false);
 
-  const filtro =
-    (searchParams.get("filtro") as "abiertas" | "todas" | "resueltas") || initialFiltro;
+  const filtro = (searchParams.get("filtro") as AlertasFiltro) || initialFiltro;
 
   const filtered = alertas.filter((a) => {
-    if (filtro === "abiertas") return a.estado !== "RESUELTA";
+    if (filtro === "abiertas") return a.estado === "ABIERTA";
+    if (filtro === "en_revision") return a.estado === "EN_REVISION";
     if (filtro === "resueltas") return a.estado === "RESUELTA";
     return true;
   });
 
-  function setFiltro(next: "abiertas" | "todas" | "resueltas") {
+  function setFiltro(next: AlertasFiltro) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("filtro", next);
     push(`/alertas?${params.toString()}`);
@@ -114,8 +116,9 @@ export function AlertasWorkspace({
         {(
           [
             { key: "abiertas", label: "Abiertas" },
-            { key: "todas", label: "Todas" },
+            { key: "en_revision", label: "En revisión" },
             { key: "resueltas", label: "Resueltas" },
+            { key: "todas", label: "Todas" },
           ] as const
         ).map((tab) => (
           <button
