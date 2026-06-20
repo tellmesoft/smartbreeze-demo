@@ -1,36 +1,180 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smartbreeze HVAC — Demo comercial
 
-## Getting Started
+Demo visual navegable para presentación comercial del sistema de gestión HVAC institucional (Smartbreeze Innovations).
 
-First, run the development server:
+Inventario centralizado, mantenimientos, alertas, consulta QR simulada y panel administrativo — **en español**, con datos en PostgreSQL e imágenes/QR en Base64.
+
+---
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | Next.js 16 (App Router) + TypeScript + Tailwind 4 |
+| Datos | PostgreSQL + Prisma 7 |
+| Gráficos | Recharts |
+| Auth | Simulada por rol (cookie demo) |
+
+---
+
+## Requisitos
+
+- **Node.js 20+**
+- **PostgreSQL:** Render (cloud, recomendado) o Docker local
+
+---
+
+## Instalación y arranque
+
+### Opción A — PostgreSQL en Render (recomendado)
 
 ```bash
+cd demo
+
+# 1. Variables de entorno
+cp .env.example .env
+# Editar DATABASE_URL (ver docs/DATABASE.md o ../../db-render.md)
+
+# 2. Dependencias
+npm install
+
+# 3. Crear tablas y cargar datos demo
+npm run db:setup
+
+# 4. Servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrí **http://localhost:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Opción B — PostgreSQL local con Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd demo
 
-## Learn More
+# 1. Levantar Postgres
+docker compose up -d
 
-To learn more about Next.js, take a look at the following resources:
+# 2. Variables de entorno (URL local del .env.example)
+cp .env.example .env
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 3. Instalar, migrar y seed
+npm install
+npm run db:setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 4. Iniciar app
+npm run dev
+```
 
-## Deploy on Vercel
+Abrí **http://localhost:3000**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Producción local
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+npm start
+```
+
+---
+
+## Credenciales demo
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| **Administrador** | `admin@smartbreeze.local` | `demo123` |
+| **Técnico** | `tecnico@smartbreeze.local` | `demo123` |
+| **Encargado de Facultad** | `encargado@smartbreeze.local` | `demo123` |
+
+**Consulta QR de referencia:** [http://localhost:3000/consulta/SBI-0048](http://localhost:3000/consulta/SBI-0048)
+
+---
+
+## Flujo de presentación (5–10 min)
+
+Guía detallada con guión, tiempos y mensajes clave:
+
+→ **[docs/FLUJO-DEMO.md](./docs/FLUJO-DEMO.md)**
+
+**Resumen rápido:**
+
+1. **Admin** → Dashboard (KPIs) → Reportes → Equipos (SBI-0048) → Mantenimientos → Alertas
+2. **Encargado** → Consulta QR `/consulta/SBI-0048` → Reportar falla
+3. **Técnico** → Mantenimientos asignados
+
+---
+
+## Módulos del demo
+
+| Módulo | Ruta | Roles |
+|---|---|---|
+| Login | `/login` | Todos |
+| Panel operativo | `/dashboard` | Todos |
+| Equipos HVAC | `/equipos` | Admin, Técnico |
+| Mantenimientos | `/mantenimientos` | Admin, Técnico |
+| Alertas | `/alertas` | Todos (permisos distintos) |
+| Ubicaciones | `/ubicaciones` | Admin |
+| Usuarios | `/usuarios` | Admin |
+| Reportes | `/reportes` | Admin |
+| Consulta QR | `/consulta/[codigo]` | Público (sin login) |
+
+---
+
+## Scripts útiles
+
+```bash
+npm run dev          # Desarrollo (http://localhost:3000)
+npm run build        # Build de producción
+npm run start        # Servidor producción
+npm run db:push      # Sincronizar esquema Prisma → PostgreSQL
+npm run db:seed      # Recargar datos demo (sin borrar esquema)
+npm run db:setup     # push + seed (arranque limpio de datos)
+```
+
+---
+
+## Estructura del proyecto
+
+```
+demo/
+├── docs/
+│   ├── DATABASE.md      # Conexión Render / Docker
+│   └── FLUJO-DEMO.md    # Guión comercial paso a paso
+├── prisma/
+│   ├── schema.prisma    # Modelo de datos
+│   └── seed.ts          # 9 equipos, 5 ubicaciones, 3 roles
+├── src/
+│   ├── app/             # Rutas Next.js (App Router)
+│   ├── components/      # UI, layout, módulos
+│   └── lib/             # Auth demo, Prisma, utilidades
+├── docker-compose.yml   # PostgreSQL local
+└── .env.example         # Plantilla DATABASE_URL
+```
+
+---
+
+## Notas importantes
+
+- **Demo comercial**, no backend de producción.
+- Autenticación simulada (sin OAuth ni JWT real).
+- QR sin cámara: acceso por URL `/consulta/[codigo]` o dropdown en dashboard.
+- Imágenes almacenadas como SVG Base64 en PostgreSQL.
+- Diseño inspirado en MaintainX (`../ref/`), adaptado al español e HVAC institucional.
+
+---
+
+## Documentación relacionada
+
+| Archivo | Contenido |
+|---|---|
+| [docs/FLUJO-DEMO.md](./docs/FLUJO-DEMO.md) | Guión de presentación 5–10 min |
+| [docs/DATABASE.md](./docs/DATABASE.md) | PostgreSQL Render + Docker |
+| [../checklist.md](../checklist.md) | Plan de desarrollo por fases |
+| [../modelo-datos.md](../modelo-datos.md) | Modelo funcional ↔ Prisma |
+| [../guia.md](../guia.md) | Alcance demo vs proyecto real |
+| [../../db-render.md](../../db-render.md) | Credenciales Render |
+
+---
+
+## Estado del proyecto
+
+Todas las fases del checklist (0–9) están completadas. El demo está listo para presentación comercial.

@@ -1,0 +1,186 @@
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ReportarAlertaForm } from "@/components/alertas/reportar-alerta-form";
+import { estadoAlertaLabels, prioridadLabels } from "@/lib/navigation";
+import { estadoAlertaVariant, prioridadVariant } from "@/lib/status-badges";
+import { cn, formatDateTime } from "@/lib/utils";
+import type { EstadoAlerta, Prioridad, Rol } from "@/generated/prisma/client";
+
+export type AlertaRow = {
+  id: string;
+  descripcion: string;
+  prioridad: Prioridad;
+  estado: EstadoAlerta;
+  fecha: string;
+  equipoNombre: string;
+  equipoCodigo: string;
+  ubicacion: string;
+  reportadoPor: string;
+};
+
+type Props = {
+  alertas: AlertaRow[];
+  equipos: { id: string; label: string; codigoInterno: string }[];
+  userRol: Rol;
+  canManage: boolean;
+  canReport: boolean;
+  initialFiltro: "abiertas" | "todas" | "resueltas";
+};
+
+export function AlertasWorkspace({
+  alertas,
+  equipos,
+  userRol,
+  canManage,
+  canReport,
+  initialFiltro,
+}: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+
+  const filtro =
+    (searchParams.get("filtro") as "abiertas" | "todas" | "resueltas") || initialFiltro;
+
+  const filtered = alertas.filter((a) => {
+    if (filtro === "abiertas") return a.estado !== "RESUELTA";
+    if (filtro === "resueltas") return a.estado === "RESUELTA";
+    return true;
+  });
+
+  function setFiltro(next: "abiertas" | "todas" | "resueltas") {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("filtro", next);
+    router.push(`/alertas?${params.toString()}`);
+  }
+
+  async function updateEstado(id: string, estado: EstadoAlerta) {
+    startTransition(async () => {
+      await fetch(`/api/alertas/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado }),
+      });
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      {canReport ? (
+        <Card>
+          <CardContent className="py-5">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Reportar nueva alerta</h2>
+            <ReportarAlertaForm equipos={equipos} />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">
+        {(
+          [
+            { key: "abiertas", label: "Abiertas" },
+            { key: "todas", label: "Todas" },
+            { key: "resueltas", label: "Resueltas" },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setFiltro(tab.key)}
+            className={cn(
+              "border-b-2 px-3 py-2 text-sm font-medium",
+              filtro === tab.key
+                ? "border-[#2563EB] text-[#2563EB]"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-500">No hay alertas en este filtro.</p>
+        ) : (
+          filtered.map((alerta) => (
+            <Card key={alerta.id}>
+              <CardContent className="py-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-gray-900">{alerta.equipoNombre}</p>
+                      <span className="text-xs text-gray-400">{alerta.equipoCodigo}</span>
+                    </div>
+                    <p className="text-sm text-gray-500">{alerta.ubicacion}</p>
+                    <p className="mt-2 text-sm text-gray-700">{alerta.descripcion}</p>
+                    <p className="mt-2 text-xs text-gray-400">
+                      Reportado por {alerta.reportadoPor} — {formatDateTime(alerta.fecha)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={prioridadVariant(alerta.prioridad)}>
+                        {prioridadLabels[alerta.prioridad]}
+                      </Badge>
+                      <Badge variant={estadoAlertaVariant(alerta.estado)}>
+                        {estadoAlertaLabels[alerta.estado]}
+                      </Badge>
+                    </div>
+
+                    {canManage && alerta.estado !== "RESUELTA" ? (
+                      <div className="flex flex-wrap gap-2">
+                        {alerta.estado === "ABIERTA" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={pending}
+                            onClick={() => updateEstado(alerta.id, "EN_REVISION")}
+                          >
+                            En revisión
+                          </Button>
+                        ) : null}
+                        <Button
+                          size="sm"
+                          disabled={pending}
+                          onClick={() => updateEstado(alerta.id, "RESUELTA")}
+                        >
+                          Marcar resuelta
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {canManage && alerta.estado === "RESUELTA" ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={pending}
+                        onClick={() => updateEstado(alerta.id, "ABIERTA")}
+                      >
+                        Reabrir
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {userRol === "ENCARGADO" ? (
+        <p className="text-xs text-gray-400">
+          Como encargado de facultad podés reportar fallas. El equipo técnico gestiona el estado de
+          cada incidencia.
+        </p>
+      ) : null}
+    </div>
+  );
+}

@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ADMINISTRADOR
+  TECNICO
+  ENCARGADO
+}
+
+enum EstadoEquipo {
+  OPERATIVO
+  MANTENIMIENTO
+  FALLA
+  FUERA_SERVICIO
+}
+
+enum TipoEquipo {
+  SPLIT
+  MANEJADORA
+  CHILLER
+  FAN_COIL
+  EXTRACTOR
+  TORRE_ENFRIAMIENTO
+  BOMBA
+  OTRO
+}
+
+enum EstadoMantenimiento {
+  PENDIENTE
+  EN_PROGRESO
+  EN_ESPERA
+  COMPLETADO
+}
+
+enum Prioridad {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum EstadoAlerta {
+  ABIERTA
+  EN_REVISION
+  RESUELTA
+}
+
+model Usuario {
+  id             String          @id @default(cuid())
+  nombre         String
+  email          String          @unique
+  password       String
+  rol            Rol
+  avatarBase64   String?         @map("avatar_base64")
+  ultimaVisita   DateTime        @default(now()) @map("ultima_visita")
+  equipos        Equipo[]        @relation("TecnicoAsignado")
+  mantenimientos Mantenimiento[] @relation("TecnicoMantenimiento")
+  alertas        Alerta[]        @relation("ReportadoPor")
+
+  @@map("usuarios")
+}
+
+model Ubicacion {
+  id          String   @id @default(cuid())
+  nombre      String
+  sector      String?
+  facultad    String
+  edificio    String
+  piso        String?
+  direccion   String?
+  descripcion String?
+  fotoBase64  String?  @map("foto_base64")
+  equipos     Equipo[]
+
+  @@map("ubicaciones")
+}
+
+model Equipo {
+  id                    String           @id @default(cuid())
+  codigoInterno         String           @unique @map("codigo_interno")
+  codigoQr              String           @unique @map("codigo_qr")
+  nombre                String
+  marca                 String
+  modelo                String
+  serie                 String
+  btu                   Int?
+  refrigerante          String?
+  tipoEquipo            TipoEquipo       @default(OTRO) @map("tipo_equipo")
+  fechaInstalacion      DateTime?        @map("fecha_instalacion")
+  ultimaMantenimiento   DateTime?        @map("ultima_mantenimiento")
+  proximaMantenimiento  DateTime?        @map("proxima_mantenimiento")
+  estado                EstadoEquipo     @default(OPERATIVO)
+  descripcion           String?
+  manualUrl             String?          @map("manual_url")
+  fotoBase64            String?          @map("foto_base64")
+  qrBase64              String?          @map("qr_base64")
+  ubicacionId           String           @map("ubicacion_id")
+  tecnicoId             String?          @map("tecnico_id")
+  ubicacion             Ubicacion        @relation(fields: [ubicacionId], references: [id])
+  tecnico               Usuario?         @relation("TecnicoAsignado", fields: [tecnicoId], references: [id])
+  mantenimientos        Mantenimiento[]
+  alertas               Alerta[]
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  @@map("equipos")
+}
+
+model Mantenimiento {
+  id                    String                 @id @default(cuid())
+  titulo                String
+  equipoId              String                 @map("equipo_id")
+  tecnicoId             String                 @map("tecnico_id")
+  fechaProgramada       DateTime               @map("fecha_programada")
+  fechaRealizada        DateTime?              @map("fecha_realizada")
+  horasTrabajadas       Float?                 @map("horas_trabajadas")
+  observaciones         String?
+  estadoGeneral         String?                @map("estado_general")
+  proximaMantenimiento  DateTime?              @map("proxima_mantenimiento")
+  estado                EstadoMantenimiento    @default(PENDIENTE)
+  prioridad             Prioridad              @default(MEDIA)
+  recurrencia           String?
+  equipo                Equipo                 @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tecnico               Usuario                @relation("TecnicoMantenimiento", fields: [tecnicoId], references: [id])
+  parametrosHvac        ParametrosHvac?
+  esterilizacion        Esterilizacion?
+  evidencia             EvidenciaMantenimiento?
+
+  @@map("mantenimientos")
+}
+
+model ParametrosHvac {
+  id                   String        @id @default(cuid())
+  mantenimientoId      String        @unique @map("mantenimiento_id")
+  voltaje              Float?
+  amperaje             Float?
+  presionBaja          Float?        @map("presion_baja")
+  presionAlta          Float?        @map("presion_alta")
+  temperaturaRetorno   Float?        @map("temperatura_retorno")
+  temperaturaImpulsion Float?        @map("temperatura_impulsion")
+  temperaturaAmbiente  Float?        @map("temperatura_ambiente")
+  subenfriamiento      Float?
+  sobrecalentamiento   Float?
+  mantenimiento        Mantenimiento @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+
+  @@map("parametros_hvac")
+}
+
+model Esterilizacion {
+  id              String        @id @default(cuid())
+  mantenimientoId String        @unique @map("mantenimiento_id")
+  aplicada        Boolean       @default(false)
+  metodo          String?
+  horasExposicion Float?        @map("horas_exposicion")
+  observaciones   String?
+  mantenimiento   Mantenimiento @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+
+  @@map("esterilizaciones")
+}
+
+model EvidenciaMantenimiento {
+  id                 String        @id @default(cuid())
+  mantenimientoId    String        @unique @map("mantenimiento_id")
+  fotoAntesBase64    String?       @map("foto_antes_base64")
+  fotoDespuesBase64  String?       @map("foto_despues_base64")
+  firmaClienteBase64 String?       @map("firma_cliente_base64")
+  pdfGeneradoBase64  String?       @map("pdf_generado_base64")
+  mantenimiento      Mantenimiento @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+
+  @@map("evidencias_mantenimiento")
+}
+
+model Alerta {
+  id           String       @id @default(cuid())
+  equipoId     String       @map("equipo_id")
+  reportadoPor String       @map("reportado_por")
+  descripcion  String
+  prioridad    Prioridad    @default(MEDIA)
+  estado       EstadoAlerta @default(ABIERTA)
+  fecha        DateTime     @default(now())
+  equipo       Equipo       @relation(fields: [equipoId], references: [id])
+  usuario      Usuario      @relation("ReportadoPor", fields: [reportadoPor], references: [id])
+
+  @@map("alertas")
+}
