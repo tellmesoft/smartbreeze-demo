@@ -79,42 +79,62 @@ export function ReportesClient({
     <div>
       <PageHeader title="Reportes" />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Filtro por rango de fechas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <Label htmlFor="desde">Desde</Label>
-              <Input
-                id="desde"
-                type="date"
-                value={desde}
-                onChange={(e) => setDesde(e.target.value)}
-              />
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="hasta">Hasta</Label>
-              <Input
-                id="hasta"
-                type="date"
-                value={hasta}
-                onChange={(e) => setHasta(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" onClick={applyFiltro} loading={isPending} loadingText="Aplicando...">
-                Aplicar
-              </Button>
-              <Button type="button" variant="outline" onClick={clearFiltro} disabled={isPending}>
-                Limpiar
-              </Button>
+      <Card className="mb-4 border-gray-100 shadow-none">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-4">
+            <p className="shrink-0 text-xs font-medium text-gray-500 lg:pb-2">
+              Filtro por rango de fechas
+            </p>
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+              <div className="sm:w-36">
+                <Label htmlFor="desde" className="text-xs text-gray-500">
+                  Desde
+                </Label>
+                <Input
+                  id="desde"
+                  type="date"
+                  value={desde}
+                  onChange={(e) => setDesde(e.target.value)}
+                  className="h-8 px-2 text-xs"
+                />
+              </div>
+              <div className="sm:w-36">
+                <Label htmlFor="hasta" className="text-xs text-gray-500">
+                  Hasta
+                </Label>
+                <Input
+                  id="hasta"
+                  type="date"
+                  value={hasta}
+                  onChange={(e) => setHasta(e.target.value)}
+                  className="h-8 px-2 text-xs"
+                />
+              </div>
+              <div className="flex gap-2 pb-0 sm:pb-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={applyFiltro}
+                  loading={isPending}
+                  loadingText="Aplicando..."
+                >
+                  Aplicar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={clearFiltro}
+                  disabled={isPending}
+                >
+                  Limpiar
+                </Button>
+              </div>
             </div>
           </div>
           {desde || hasta ? (
-            <p className="mt-3 text-xs text-gray-500">
-              Mostrando mantenimientos por fecha programada y alertas por fecha de reporte.
+            <p className="mt-2 text-[11px] leading-snug text-gray-400">
+              Mantenimientos por fecha programada y alertas por fecha de reporte.
             </p>
           ) : null}
         </CardContent>

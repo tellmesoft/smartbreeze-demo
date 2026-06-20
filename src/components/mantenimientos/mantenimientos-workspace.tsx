@@ -173,7 +173,7 @@ export function MantenimientosWorkspace({
         </TabButton>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-start">
         <Card className={cn("overflow-hidden", !showList && "hidden lg:block")}>
           <div className="max-h-[70vh] overflow-y-auto lg:max-h-[72vh]">
             {userRol === "TECNICO" || asignadosAMi.length > 0 ? (
@@ -209,8 +209,15 @@ export function MantenimientosWorkspace({
           </div>
         </Card>
 
-        <Card className={cn(!showDetail && "hidden lg:block")}>
-          <CardContent className="py-6">
+        <Card className={cn("min-w-0 overflow-hidden", !showDetail && "hidden lg:block")}>
+          <CardContent
+            className={cn(
+              "py-6",
+              showDetail &&
+                selected &&
+                "max-h-[70vh] overflow-y-auto overscroll-y-contain lg:max-h-[72vh]"
+            )}
+          >
             {!showDetail || !selected ? (
               <div className="flex min-h-[280px] items-center justify-center text-center text-gray-500 lg:min-h-[360px]">
                 Seleccioná un mantenimiento de la lista

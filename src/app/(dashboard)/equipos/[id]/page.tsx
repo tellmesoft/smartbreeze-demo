@@ -73,7 +73,9 @@ export default async function EquipoDetailPage({ params }: Props) {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <Card className="min-w-0 overflow-hidden">
+        <CardContent className="max-h-[70vh] overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:max-h-[calc(100dvh-11rem)]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -259,7 +261,9 @@ export default async function EquipoDetailPage({ params }: Props) {
             </Card>
           ) : null}
         </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

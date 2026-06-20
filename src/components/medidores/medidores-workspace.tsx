@@ -189,7 +189,7 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-start">
         <Card className={cn("overflow-hidden", !showList && "hidden lg:block")}>
           <div className="border-b border-gray-100 px-4 py-3 text-sm text-gray-600">
             {filtered.length} medidor{filtered.length === 1 ? "" : "es"}
@@ -242,8 +242,15 @@ export function MedidoresWorkspace({ items, userRol, selectedId }: Props) {
           </div>
         </Card>
 
-        <Card className={cn(!showDetail && "hidden lg:block")}>
-          <CardContent className="py-6">
+        <Card className={cn("min-w-0 overflow-hidden", !showDetail && "hidden lg:block")}>
+          <CardContent
+            className={cn(
+              "py-6",
+              showDetail &&
+                selected &&
+                "max-h-[70vh] overflow-y-auto overscroll-y-contain lg:max-h-[72vh]"
+            )}
+          >
             {!showDetail || !selected ? (
               <div className="flex min-h-[280px] items-center justify-center text-center text-gray-500 lg:min-h-[360px]">
                 Seleccioná un medidor de la lista
