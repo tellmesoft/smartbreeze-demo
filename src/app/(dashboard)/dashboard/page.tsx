@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { SimularEscaneoQr } from "@/components/consulta/simular-escaneo-qr";
+import { ConsultaQrCard } from "@/components/consulta/consulta-qr-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireModule } from "@/lib/auth";
@@ -146,6 +146,12 @@ export default async function DashboardPage() {
         title={isEncargado ? "Panel de consulta" : "Panel operativo"}
       />
 
+      {isEncargado ? (
+        <div className="mb-6">
+          <ConsultaQrCard equipos={equiposConsulta} showEncargadoHint />
+        </div>
+      ) : null}
+
       <div
         className={`grid gap-4 sm:grid-cols-2 ${isEncargado ? "max-w-sm" : "xl:grid-cols-5"}`}
       >
@@ -246,21 +252,10 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {canUseConsultaQr(user.rol) ? (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Consulta QR</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {isEncargado ? (
-              <p className="text-sm text-gray-600">
-                Escaneá o simulá la consulta de un equipo para ver estado, próximo mantenimiento y
-                técnico responsable.
-              </p>
-            ) : null}
-            <SimularEscaneoQr equipos={equiposConsulta} />
-          </CardContent>
-        </Card>
+      {canUseConsultaQr(user.rol) && !isEncargado ? (
+        <div className="mt-6">
+          <ConsultaQrCard equipos={equiposConsulta} />
+        </div>
       ) : null}
 
       {isAdmin ? (

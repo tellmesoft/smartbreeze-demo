@@ -71,8 +71,8 @@ export default async function EquipoDetailPage({ params }: Props) {
             <Badge variant={estadoEquipoVariant(equipo.estado)}>
               {estadoEquipoLabels[equipo.estado]}
             </Badge>
-            <Link href={`/consulta/${equipo.codigoQr}`}>
-              <Button variant="outline">Ver consulta QR</Button>
+            <Link href={`/consulta-qr?codigo=${equipo.codigoQr}&autostart=1`}>
+              <Button variant="outline">Escanear QR (simulación)</Button>
             </Link>
           </div>
         }
@@ -223,7 +223,7 @@ export default async function EquipoDetailPage({ params }: Props) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={qr} alt={`QR ${equipo.codigoQr}`} className="mx-auto rounded border" />
               ) : null}
-              <p className="mt-3 text-xs text-gray-500">/consulta/{equipo.codigoQr}</p>
+              <p className="mt-3 text-xs text-gray-500">QR de referencia del equipo</p>
             </CardContent>
           </Card>
 

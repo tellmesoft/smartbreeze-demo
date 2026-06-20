@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Gauge,
   LayoutDashboard,
+  QrCode,
   Package,
   Truck,
   Users,
@@ -39,6 +40,13 @@ export const navItems: NavItem[] = [
     label: "Panel",
     icon: LayoutDashboard,
     module: "dashboard",
+    group: "inicio",
+  },
+  {
+    href: "/consulta-qr",
+    label: "Consulta QR",
+    icon: QrCode,
+    module: "consulta_qr",
     group: "inicio",
   },
   {

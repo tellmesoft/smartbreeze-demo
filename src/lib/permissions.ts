@@ -3,6 +3,7 @@ import type { Rol } from "@/generated/prisma/client";
 /** Módulos del sidebar / rutas del dashboard. */
 export type AppModule =
   | "dashboard"
+  | "consulta_qr"
   | "equipos"
   | "mantenimientos"
   | "repuestos"
@@ -21,6 +22,7 @@ const ADMIN: Rol[] = ["ADMINISTRADOR"];
 /** Quién puede entrar a cada ruta (solo lectura o más). */
 export const moduleRoles: Record<AppModule, Rol[]> = {
   dashboard: ALL,
+  consulta_qr: ALL,
   equipos: OPS,
   mantenimientos: OPS,
   repuestos: OPS,
