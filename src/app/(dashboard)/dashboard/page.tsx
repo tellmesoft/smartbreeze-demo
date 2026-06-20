@@ -21,6 +21,21 @@ import {
   estadoMantenimientoVariant,
 } from "@/lib/status-badges";
 import { formatDate } from "@/lib/utils";
+import type { EstadoEquipo } from "@/generated/prisma/client";
+
+const estadoEquipoColors: Record<EstadoEquipo, string> = {
+  OPERATIVO: "#059669",
+  MANTENIMIENTO: "#D97706",
+  FALLA: "#DC2626",
+  FUERA_SERVICIO: "#6B7280",
+};
+
+const estadosEquipoOrden: EstadoEquipo[] = [
+  "OPERATIVO",
+  "MANTENIMIENTO",
+  "FALLA",
+  "FUERA_SERVICIO",
+];
 
 export default async function DashboardPage() {
   const user = await requireModule("dashboard");
@@ -40,6 +55,7 @@ export default async function DashboardPage() {
     alertasRecientes,
     equiposConsulta,
     proximosVencimientos,
+    equiposPorEstadoRaw,
   ] = await Promise.all([
     prisma.equipo.count({ where: equipoScope }),
     prisma.equipo.count({ where: { ...equipoScope, estado: "OPERATIVO" } }),
@@ -85,7 +101,22 @@ export default async function DashboardPage() {
       orderBy: { proximaMantenimiento: "asc" },
       take: 6,
     }),
+    prisma.equipo.groupBy({
+      by: ["estado"],
+      where: equipoScope,
+      _count: { id: true },
+    }),
   ]);
+
+  const equiposPorEstado = estadosEquipoOrden.map((estado) => {
+    const found = equiposPorEstadoRaw.find((row) => row.estado === estado);
+    return {
+      estado,
+      label: estadoEquipoLabels[estado],
+      count: found?._count.id ?? 0,
+      color: estadoEquipoColors[estado],
+    };
+  });
 
   const kpis = isEncargado
     ? [{ label: "Alertas abiertas", value: alertasAbiertas, tone: "text-red-700" }]
@@ -249,15 +280,48 @@ export default async function DashboardPage() {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Resumen de estados de equipos</CardTitle>
+            <p className="text-sm text-gray-500">
+              {isTecnico
+                ? "Distribución de tus equipos asignados por estado operativo."
+                : "Distribución del parque HVAC registrado por estado operativo."}
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(estadoEquipoLabels).map(([key, label]) => (
-                <Badge key={key} variant={estadoEquipoVariant(key as keyof typeof estadoEquipoLabels)}>
-                  {label}
-                </Badge>
-              ))}
-            </div>
+            {totalEquipos === 0 ? (
+              <p className="text-sm text-gray-500">No hay equipos en tu alcance para mostrar.</p>
+            ) : (
+              <div className="space-y-4">
+                {equiposPorEstado.map((item) => {
+                  const pct = totalEquipos > 0 ? Math.round((item.count / totalEquipos) * 100) : 0;
+                  return (
+                    <div key={item.estado} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={estadoEquipoVariant(item.estado)}>{item.label}</Badge>
+                          <span className="text-sm text-gray-500">{pct}%</span>
+                        </div>
+                        <span className="text-sm font-semibold tabular-nums text-gray-900">
+                          {item.count}
+                          <span className="font-normal text-gray-400">
+                            {" "}
+                            / {totalEquipos}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: item.color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : null}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AsyncContent } from "@/components/ui/loading";
@@ -46,6 +47,7 @@ export function AlertasWorkspace({
   const { isPending: isNavigating, push, refresh } = usePendingRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const [reportOpen, setReportOpen] = useState(false);
 
   const filtro =
     (searchParams.get("filtro") as "abiertas" | "todas" | "resueltas") || initialFiltro;
@@ -79,11 +81,31 @@ export function AlertasWorkspace({
     <AsyncContent pending={isLoading} label={pending ? "Actualizando..." : "Cargando..."}>
     <div className="space-y-6">
       {canReport ? (
-        <Card>
-          <CardContent className="py-5">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Reportar nueva alerta</h2>
-            <ReportarAlertaForm equipos={equipos} />
-          </CardContent>
+        <Card className="overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setReportOpen((open) => !open)}
+            aria-expanded={reportOpen}
+            aria-controls="reportar-alerta-panel"
+            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50/80 sm:px-6"
+          >
+            <span className="text-lg font-semibold text-gray-900">Reportar nueva alerta</span>
+            <ChevronDown
+              className={cn(
+                "h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200",
+                reportOpen && "rotate-180"
+              )}
+              aria-hidden
+            />
+          </button>
+          {reportOpen ? (
+            <CardContent
+              id="reportar-alerta-panel"
+              className="border-t border-gray-100 px-5 pb-5 pt-5 sm:px-6"
+            >
+              <ReportarAlertaForm equipos={equipos} />
+            </CardContent>
+          ) : null}
         </Card>
       ) : null}
 
