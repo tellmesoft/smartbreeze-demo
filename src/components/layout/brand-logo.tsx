@@ -11,6 +11,9 @@ type BrandLogoProps = {
   variant?: "mark" | "full";
   /** Texto junto al logo (sidebar) */
   showWordmark?: boolean;
+  wordmarkClassName?: string;
+  /** centered = logo a la izquierda, nombre centrado (login) */
+  wordmarkLayout?: "inline" | "centered";
 };
 
 export function BrandLogo({
@@ -20,6 +23,8 @@ export function BrandLogo({
   priority = false,
   variant = "mark",
   showWordmark = false,
+  wordmarkClassName,
+  wordmarkLayout = "inline",
 }: BrandLogoProps) {
   const src = variant === "full" ? "/logo.png" : "/logo-mark.png";
 
@@ -33,24 +38,47 @@ export function BrandLogo({
       className={cn(
         variant === "full"
           ? "h-16 w-auto max-w-[240px] object-contain object-left"
-          : "h-14 w-14 shrink-0 object-contain object-left",
+          : cn(
+              "shrink-0 object-contain object-left",
+              wordmarkLayout === "centered" ? "h-10 w-10" : "h-14 w-14"
+            ),
         !showWordmark && className
       )}
     />
   );
 
   const wordmark = showWordmark ? (
-    <div className="min-w-0 leading-tight">
-      <p className="text-sm font-semibold text-gray-900">Smartbreeze</p>
-      <p className="text-sm font-medium text-gray-500">Innovations</p>
+    <div
+      className={cn(
+        "min-w-0 leading-tight",
+        wordmarkLayout === "centered" && "text-center"
+      )}
+    >
+      <p className={cn("text-sm font-semibold text-gray-900", wordmarkClassName)}>
+        Smartbreeze
+      </p>
+      <p className={cn("text-sm font-medium text-gray-500", wordmarkClassName)}>Innovations</p>
     </div>
   ) : null;
 
   const content = showWordmark ? (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      {image}
-      {wordmark}
-    </div>
+    wordmarkLayout === "centered" ? (
+      <div
+        className={cn(
+          "grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-3",
+          className
+        )}
+      >
+        <div className="flex justify-end">{image}</div>
+        {wordmark}
+        <div aria-hidden="true" />
+      </div>
+    ) : (
+      <div className={cn("flex items-center gap-2.5", className)}>
+        {image}
+        {wordmark}
+      </div>
+    )
   ) : (
     image
   );

@@ -5,17 +5,18 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { chipActive, chipInactive } from "@/lib/selection-styles";
 
 const demoAccounts = [
   { email: "admin@smartbreeze.local", label: "Administrador" },
   { email: "tecnico@smartbreeze.local", label: "Técnico" },
   { email: "encargado@smartbreeze.local", label: "Encargado" },
-];
+] as const;
+
+const defaultDemoEmail = demoAccounts[0].email;
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultDemoEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-4">
         {demoAccounts.map((account) => {
           const selected = email === account.email;
           return (
@@ -53,8 +54,10 @@ export function LoginForm() {
             aria-pressed={selected}
             onClick={() => setEmail(account.email)}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              selected ? chipActive : chipInactive
+              "rounded-xl border px-4 py-1.5 text-xs font-medium transition-colors",
+              selected
+                ? "border-[#2563EB] bg-blue-50 text-[#2563EB] ring-1 ring-[#2563EB]/20"
+                : "border-gray-200 text-gray-600 hover:border-blue-200 hover:text-blue-700"
             )}
           >
             {account.label}
