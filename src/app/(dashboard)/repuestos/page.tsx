@@ -2,13 +2,18 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { NuevoRepuestoButton } from "@/components/repuestos/nuevo-repuesto-button";
 import {
+  RepuestosStockMinimoAdminPanel,
+  RepuestosStockMinimoInfo,
+} from "@/components/repuestos/repuestos-stock-minimo-panel";
+import {
   RepuestosWorkspace,
   type RepuestoRow,
 } from "@/components/repuestos/repuestos-workspace";
 import { MasterDetailPageSkeleton } from "@/components/ui/loading";
 import { requireModule } from "@/lib/auth";
-import { canCreateCatalog } from "@/lib/permissions";
+import { canCreateRepuesto } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getStockMinimoRepuestos } from "@/lib/repuestos-config";
 import { formatDateTime } from "@/lib/utils";
 
 type Props = {
@@ -19,17 +24,24 @@ export default async function RepuestosPage({ searchParams }: Props) {
   const user = await requireModule("repuestos");
   const params = await searchParams;
 
-  const [repuestos, equipos, proveedores] = await Promise.all([
+  const [repuestos, equipos, proveedores, stockMinimo] = await Promise.all([
     prisma.repuesto.findMany({
       include: {
         equipo: true,
         proveedor: true,
-        movimientos: { orderBy: { fecha: "desc" }, take: 12 },
+        movimientos: {
+          orderBy: { fecha: "desc" },
+          take: 12,
+          include: {
+            registradoPor: { select: { nombre: true } },
+          },
+        },
       },
       orderBy: { nombre: "asc" },
     }),
     prisma.equipo.findMany({ orderBy: { codigoInterno: "asc" } }),
     prisma.proveedor.findMany({ orderBy: { nombre: "asc" } }),
+    getStockMinimoRepuestos(),
   ]);
 
   const items: RepuestoRow[] = repuestos.map((r) => ({
@@ -62,6 +74,7 @@ export default async function RepuestosPage({ searchParams }: Props) {
       cantidadResultante: m.cantidadResultante,
       observaciones: m.observaciones,
       fechaLabel: formatDateTime(m.fecha),
+      registradoPor: m.registradoPor?.nombre ?? null,
     })),
   }));
 
@@ -69,9 +82,17 @@ export default async function RepuestosPage({ searchParams }: Props) {
     <div>
       <PageHeader
         title="Repuestos"
+        toolbar={
+          user.rol === "ADMINISTRADOR" ? (
+            <RepuestosStockMinimoAdminPanel initialStockMinimo={stockMinimo} />
+          ) : (
+            <RepuestosStockMinimoInfo stockMinimo={stockMinimo} />
+          )
+        }
         action={
-          canCreateCatalog(user.rol) ? (
+          canCreateRepuesto(user.rol) ? (
             <NuevoRepuestoButton
+              stockMinimo={stockMinimo}
               equipos={equipos.map((e) => ({
                 id: e.id,
                 label: `${e.codigoInterno} — ${e.nombre}`,
@@ -88,6 +109,7 @@ export default async function RepuestosPage({ searchParams }: Props) {
       <Suspense fallback={<MasterDetailPageSkeleton />}>
         <RepuestosWorkspace
           items={items}
+          stockMinimo={stockMinimo}
           userRol={user.rol as "ADMINISTRADOR" | "TECNICO"}
           selectedId={params.id}
         />

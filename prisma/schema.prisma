@@ -63,6 +63,7 @@ enum TipoMovimientoRepuesto {
   ENTRADA
   SALIDA
   AJUSTE
+  PEDIDO
 }
 
 enum ResultadoInspeccion {
@@ -103,9 +104,13 @@ model Usuario {
   ultimaVisita   DateTime        @default(now()) @map("ultima_visita")
   equipos        Equipo[]        @relation("TecnicoAsignado")
   mantenimientos Mantenimiento[] @relation("TecnicoMantenimiento")
+  mantenimientosCreados Mantenimiento[] @relation("MantenimientoCreador")
+  historialEstadosMantenimiento HistorialEstadoMantenimiento[] @relation("HistorialEstadoMantenimientoUsuario")
+  historialEstadosAlerta HistorialEstadoAlerta[] @relation("HistorialEstadoAlertaUsuario")
   alertas        Alerta[]        @relation("ReportadoPor")
   procedimientos Procedimiento[] @relation("ProcedimientoCreador")
   proveedores    Proveedor[]     @relation("ProveedorCreador")
+  movimientosRepuesto MovimientoRepuesto[] @relation("MovimientoRepuestoRegistrador")
 
   @@map("usuarios")
 }
@@ -162,6 +167,7 @@ model Mantenimiento {
   titulo                String
   equipoId              String                 @map("equipo_id")
   tecnicoId             String                 @map("tecnico_id")
+  creadoPorId           String?                @map("creado_por_id")
   fechaProgramada       DateTime               @map("fecha_programada")
   fechaRealizada        DateTime?              @map("fecha_realizada")
   horasTrabajadas       Float?                 @map("horas_trabajadas")
@@ -177,14 +183,29 @@ model Mantenimiento {
   firmaSupervisorBase64 String?                    @map("firma_supervisor_base64")
   equipo                Equipo                     @relation(fields: [equipoId], references: [id], onDelete: Cascade)
   tecnico               Usuario                    @relation("TecnicoMantenimiento", fields: [tecnicoId], references: [id])
+  creadoPor             Usuario?                   @relation("MantenimientoCreador", fields: [creadoPorId], references: [id], onDelete: SetNull)
   procedimiento         Procedimiento?             @relation(fields: [procedimientoId], references: [id], onDelete: SetNull)
   proveedor             Proveedor?                 @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
   parametrosHvac        ParametrosHvac?
   esterilizacion        Esterilizacion?
   evidencia             EvidenciaMantenimiento?
   respuestasProcedimiento ProcedimientoItemRespuesta[]
+  historialEstados      HistorialEstadoMantenimiento[]
 
   @@map("mantenimientos")
+}
+
+model HistorialEstadoMantenimiento {
+  id              String                 @id @default(cuid())
+  mantenimientoId String                 @map("mantenimiento_id")
+  estadoAnterior  EstadoMantenimiento?   @map("estado_anterior")
+  estadoNuevo     EstadoMantenimiento    @map("estado_nuevo")
+  cambiadoPorId   String                 @map("cambiado_por_id")
+  fecha           DateTime               @default(now())
+  mantenimiento   Mantenimiento          @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+  cambiadoPor     Usuario                @relation("HistorialEstadoMantenimientoUsuario", fields: [cambiadoPorId], references: [id], onDelete: Restrict)
+
+  @@map("historial_estado_mantenimiento")
 }
 
 model ParametrosHvac {
@@ -238,8 +259,22 @@ model Alerta {
   fecha        DateTime     @default(now())
   equipo       Equipo       @relation(fields: [equipoId], references: [id])
   usuario      Usuario      @relation("ReportadoPor", fields: [reportadoPor], references: [id])
+  historialEstados HistorialEstadoAlerta[]
 
   @@map("alertas")
+}
+
+model HistorialEstadoAlerta {
+  id             String        @id @default(cuid())
+  alertaId       String        @map("alerta_id")
+  estadoAnterior EstadoAlerta? @map("estado_anterior")
+  estadoNuevo    EstadoAlerta  @map("estado_nuevo")
+  cambiadoPorId  String        @map("cambiado_por_id")
+  fecha          DateTime      @default(now())
+  alerta         Alerta        @relation(fields: [alertaId], references: [id], onDelete: Cascade)
+  cambiadoPor    Usuario       @relation("HistorialEstadoAlertaUsuario", fields: [cambiadoPorId], references: [id], onDelete: Restrict)
+
+  @@map("historial_estado_alerta")
 }
 
 model Repuesto {
@@ -272,8 +307,10 @@ model MovimientoRepuesto {
   cantidad           Int
   cantidadResultante Int                    @map("cantidad_resultante")
   observaciones      String?
+  registradoPorId    String?                @map("registrado_por_id")
   fecha              DateTime               @default(now())
   repuesto           Repuesto               @relation(fields: [repuestoId], references: [id], onDelete: Cascade)
+  registradoPor      Usuario?               @relation("MovimientoRepuestoRegistrador", fields: [registradoPorId], references: [id], onDelete: SetNull)
 
   @@map("movimientos_repuesto")
 }
@@ -357,4 +394,12 @@ model Proveedor {
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
   @@map("proveedores")
+}
+
+model ConfiguracionApp {
+  id                   String   @id @default("default")
+  stockMinimoRepuestos Int      @default(3) @map("stock_minimo_repuestos")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("configuracion_app")
 }

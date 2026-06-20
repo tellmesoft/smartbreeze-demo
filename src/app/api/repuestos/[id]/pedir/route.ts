@@ -15,7 +15,6 @@ export async function POST(request: Request, { params }: Params) {
     const { id } = await params;
     const body = await request.json();
     const cantidad = Number(body.cantidad ?? 0);
-    const observaciones = body.observaciones ? String(body.observaciones).trim() : null;
 
     if (!cantidad || Number.isNaN(cantidad) || cantidad <= 0) {
       return NextResponse.json({ error: "Indicá una cantidad válida." }, { status: 400 });
@@ -26,20 +25,21 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: "No encontrado." }, { status: 404 });
     }
 
-    const cantidadResultante = repuesto.cantidadDisponible + cantidad;
+    const cantidadPedida = repuesto.cantidadPedida + cantidad;
 
     await prisma.$transaction([
       prisma.repuesto.update({
         where: { id },
-        data: { cantidadDisponible: cantidadResultante },
+        data: { cantidadPedida },
       }),
       prisma.movimientoRepuesto.create({
         data: {
           repuestoId: id,
-          tipo: "ENTRADA",
+          tipo: "PEDIDO",
           cantidad,
-          cantidadResultante,
-          observaciones: observaciones ?? "Reabastecimiento de stock.",
+          cantidadResultante: cantidadPedida,
+          observaciones: "Pedido registrado al proveedor.",
+          registradoPorId: user.id,
         },
       }),
     ]);
@@ -47,8 +47,8 @@ export async function POST(request: Request, { params }: Params) {
     revalidatePath("/repuestos");
     revalidatePath("/dashboard");
 
-    return NextResponse.json({ id, cantidadDisponible: cantidadResultante });
+    return NextResponse.json({ id, cantidadPedida });
   } catch {
-    return NextResponse.json({ error: "No se pudo reabastecer." }, { status: 500 });
+    return NextResponse.json({ error: "No se pudo registrar el pedido." }, { status: 500 });
   }
 }

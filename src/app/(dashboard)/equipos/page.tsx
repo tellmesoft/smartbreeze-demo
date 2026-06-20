@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EquiposFilters } from "@/components/equipos/equipos-filters";
 import { FiltersBarSkeleton } from "@/components/ui/loading";
 import { requireModule } from "@/lib/auth";
-import { canCreateCatalog, equiposScopeForRole } from "@/lib/permissions";
+import { canCreateEquipo, equiposScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { base64ToDataUrl } from "@/lib/utils";
 import type { EstadoEquipo, Prisma } from "@/generated/prisma/client";
@@ -62,7 +62,7 @@ export default async function EquiposPage({ searchParams }: Props) {
       <PageHeader
         title="Equipos HVAC"
         action={
-          canCreateCatalog(user.rol) ? (
+          canCreateEquipo(user.rol) ? (
             <PendingNavButton href="/equipos/nuevo" loadingText="Abriendo...">
               + Nuevo equipo
             </PendingNavButton>

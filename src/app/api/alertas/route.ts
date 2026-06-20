@@ -64,6 +64,12 @@ export async function POST(request: Request) {
         descripcion,
         prioridad,
         estado: "ABIERTA",
+        historialEstados: {
+          create: {
+            estadoNuevo: "ABIERTA",
+            cambiadoPorId: reportadoPorId,
+          },
+        },
       },
     });
 

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { AlertTriangle } from "lucide-react";
 import { MasterDetailBack } from "@/components/layout/master-detail-back";
 import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -43,6 +44,15 @@ export type MantenimientoRow = {
   recurrencia: string | null;
   tecnicoId: string;
   tecnicoNombre: string;
+  creadoPorNombre: string | null;
+  fueCompletadoAntes: boolean;
+  historialEstados: {
+    id: string;
+    estadoAnterior: EstadoMantenimiento | null;
+    estadoNuevo: EstadoMantenimiento;
+    cambiadoPor: string;
+    fechaLabel: string;
+  }[];
   proveedor: {
     id: string;
     nombre: string;
@@ -330,6 +340,24 @@ function MantenimientoDetail({
         </div>
       </div>
 
+      {item.fueCompletadoAntes ? (
+        <div
+          className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          role="alert"
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+          <div>
+            <p className="font-semibold">Atención: mantenimiento previamente completado</p>
+            <p className="mt-1">
+              El estado actual es{" "}
+              <span className="font-medium">{estadoMantenimientoLabels[item.estado]}</span>, pero
+              este trabajo ya había sido marcado como Completado. Revisá el historial antes de
+              continuar.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         {statusActions.map((action) => (
           <Button
@@ -348,7 +376,8 @@ function MantenimientoDetail({
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Detail label="Fecha programada" value={item.fechaProgramadaLabel} />
         <Detail label="Fecha realizada" value={item.fechaRealizadaLabel} />
-        <Detail label="Técnico" value={item.tecnicoNombre} />
+        <Detail label="Técnico asignado" value={item.tecnicoNombre} />
+        <Detail label="Creado por" value={item.creadoPorNombre ?? "—"} />
         <Detail
           label="Proveedor externo"
           value={
@@ -377,6 +406,38 @@ function MantenimientoDetail({
       {item.observaciones ? (
         <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">{item.observaciones}</div>
       ) : null}
+
+      <div className="rounded-lg border border-gray-100 p-4">
+        <p className="mb-3 text-sm font-semibold text-gray-800">Historial de estados</p>
+        {item.historialEstados.length === 0 ? (
+          <p className="text-sm text-gray-500">Sin cambios de estado registrados.</p>
+        ) : (
+          <div className="space-y-3">
+            {item.historialEstados.map((entry) => (
+              <div key={entry.id} className="rounded-md border border-gray-100 p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-gray-900">
+                    {entry.estadoAnterior
+                      ? `${estadoMantenimientoLabels[entry.estadoAnterior]} → ${estadoMantenimientoLabels[entry.estadoNuevo]}`
+                      : `Creación · ${estadoMantenimientoLabels[entry.estadoNuevo]}`}
+                  </span>
+                  <span className="text-xs text-gray-400">{entry.fechaLabel}</span>
+                </div>
+                <p className="mt-1 text-gray-600">
+                  {entry.estadoAnterior ? "Cambio por" : "Registrado por"}:{" "}
+                  <span className="font-medium text-gray-800">{entry.cambiadoPor}</span>
+                </p>
+                {entry.estadoAnterior === "COMPLETADO" &&
+                entry.estadoNuevo !== "COMPLETADO" ? (
+                  <p className="mt-2 text-xs font-medium text-amber-700">
+                    Regresión desde Completado a {estadoMantenimientoLabels[entry.estadoNuevo]}.
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {item.procedimiento ? (
         <ProcedimientoEjecucion

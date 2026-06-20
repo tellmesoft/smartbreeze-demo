@@ -43,13 +43,16 @@ async function main() {
   await prisma.evidenciaMantenimiento.deleteMany();
   await prisma.esterilizacion.deleteMany();
   await prisma.parametrosHvac.deleteMany();
+  await prisma.historialEstadoMantenimiento.deleteMany();
   await prisma.movimientoRepuesto.deleteMany();
   await prisma.lecturaMedidor.deleteMany();
   await prisma.medidor.deleteMany();
   await prisma.procedimientoItemRespuesta.deleteMany();
+  await prisma.historialEstadoAlerta.deleteMany();
   await prisma.alerta.deleteMany();
   await prisma.mantenimiento.deleteMany();
   await prisma.repuesto.deleteMany();
+  await prisma.configuracionApp.deleteMany();
   await prisma.proveedor.deleteMany();
   await prisma.procedimientoItem.deleteMany();
   await prisma.procedimiento.deleteMany();
@@ -530,7 +533,31 @@ async function main() {
         ],
       });
     }
+
+    const cantidadPedida =
+      "cantidadPedida" in data && typeof data.cantidadPedida === "number" ? data.cantidadPedida : 0;
+    if (cantidadPedida > 0) {
+      await prisma.movimientoRepuesto.create({
+        data: {
+          repuestoId: repuesto.id,
+          tipo: TipoMovimientoRepuesto.PEDIDO,
+          cantidad: cantidadPedida,
+          cantidadResultante: cantidadPedida,
+          observaciones: "Pedido registrado al proveedor.",
+          registradoPorId: tecnico.id,
+          fecha: addDays(-3),
+        },
+      });
+    }
   }
+
+  await prisma.configuracionApp.create({
+    data: { id: "default", stockMinimoRepuestos: 3 },
+  });
+
+  await prisma.repuesto.updateMany({
+    data: { cantidadMinima: 3 },
+  });
 
   async function seedMedidor(data: {
     nombre: string;
@@ -778,6 +805,7 @@ async function main() {
       titulo: "Mantención preventiva trimestral — Split Anwo",
       equipoId: equipos[0].id,
       tecnicoId: tecnico.id,
+      creadoPorId: admin.id,
       fechaProgramada: ultimaMant,
       fechaRealizada: ultimaMant,
       horasTrabajadas: 2.5,
@@ -947,6 +975,109 @@ async function main() {
     });
   }
 
+  await prisma.mantenimiento.updateMany({
+    data: { creadoPorId: admin.id },
+  });
+
+  async function seedHistorialEstado(
+    mantenimientoId: string,
+    entries: {
+      estadoAnterior?: EstadoMantenimiento | null;
+      estadoNuevo: EstadoMantenimiento;
+      userId: string;
+      daysAgo: number;
+    }[]
+  ) {
+    for (const entry of entries) {
+      await prisma.historialEstadoMantenimiento.create({
+        data: {
+          mantenimientoId,
+          estadoAnterior: entry.estadoAnterior ?? null,
+          estadoNuevo: entry.estadoNuevo,
+          cambiadoPorId: entry.userId,
+          fecha: addDays(-entry.daysAgo),
+        },
+      });
+    }
+  }
+
+  await seedHistorialEstado(mantenimientoHero.id, [
+    { estadoNuevo: EstadoMantenimiento.PENDIENTE, userId: admin.id, daysAgo: 90 },
+    {
+      estadoAnterior: EstadoMantenimiento.PENDIENTE,
+      estadoNuevo: EstadoMantenimiento.EN_PROGRESO,
+      userId: tecnico.id,
+      daysAgo: 88,
+    },
+    {
+      estadoAnterior: EstadoMantenimiento.EN_PROGRESO,
+      estadoNuevo: EstadoMantenimiento.COMPLETADO,
+      userId: tecnico.id,
+      daysAgo: 87,
+    },
+  ]);
+
+  if (chillerMant) {
+    await seedHistorialEstado(chillerMant.id, [
+      { estadoNuevo: EstadoMantenimiento.PENDIENTE, userId: admin.id, daysAgo: 14 },
+      {
+        estadoAnterior: EstadoMantenimiento.PENDIENTE,
+        estadoNuevo: EstadoMantenimiento.EN_PROGRESO,
+        userId: tecnico.id,
+        daysAgo: 4,
+      },
+      {
+        estadoAnterior: EstadoMantenimiento.EN_PROGRESO,
+        estadoNuevo: EstadoMantenimiento.COMPLETADO,
+        userId: tecnico.id,
+        daysAgo: 3,
+      },
+      {
+        estadoAnterior: EstadoMantenimiento.COMPLETADO,
+        estadoNuevo: EstadoMantenimiento.EN_PROGRESO,
+        userId: admin.id,
+        daysAgo: 1,
+      },
+    ]);
+  }
+
+  for (const m of mantenimientosVinculados) {
+    if (m.id === chillerMant?.id) continue;
+
+    const entries: {
+      estadoAnterior?: EstadoMantenimiento | null;
+      estadoNuevo: EstadoMantenimiento;
+      userId: string;
+      daysAgo: number;
+    }[] = [{ estadoNuevo: EstadoMantenimiento.PENDIENTE, userId: admin.id, daysAgo: 20 }];
+
+    if (m.estado === EstadoMantenimiento.COMPLETADO) {
+      entries.push(
+        {
+          estadoAnterior: EstadoMantenimiento.PENDIENTE,
+          estadoNuevo: EstadoMantenimiento.EN_PROGRESO,
+          userId: tecnico.id,
+          daysAgo: 12,
+        },
+        {
+          estadoAnterior: EstadoMantenimiento.EN_PROGRESO,
+          estadoNuevo: EstadoMantenimiento.COMPLETADO,
+          userId: tecnico.id,
+          daysAgo: 11,
+        }
+      );
+    } else if (m.estado !== EstadoMantenimiento.PENDIENTE) {
+      entries.push({
+        estadoAnterior: EstadoMantenimiento.PENDIENTE,
+        estadoNuevo: m.estado,
+        userId: tecnico.id,
+        daysAgo: 8,
+      });
+    }
+
+    await seedHistorialEstado(m.id, entries);
+  }
+
   await prisma.alerta.createMany({
     data: [
       {
@@ -983,6 +1114,75 @@ async function main() {
       },
     ],
   });
+
+  const alertasSeed = await prisma.alerta.findMany({
+    orderBy: { fecha: "desc" },
+  });
+
+  async function seedHistorialAlerta(
+    alertaId: string,
+    entries: {
+      estadoAnterior?: EstadoAlerta | null;
+      estadoNuevo: EstadoAlerta;
+      userId: string;
+      daysAgo: number;
+    }[]
+  ) {
+    for (const entry of entries) {
+      await prisma.historialEstadoAlerta.create({
+        data: {
+          alertaId,
+          estadoAnterior: entry.estadoAnterior ?? null,
+          estadoNuevo: entry.estadoNuevo,
+          cambiadoPorId: entry.userId,
+          fecha: addDays(-entry.daysAgo),
+        },
+      });
+    }
+  }
+
+  for (const alerta of alertasSeed) {
+    const entries: {
+      estadoAnterior?: EstadoAlerta | null;
+      estadoNuevo: EstadoAlerta;
+      userId: string;
+      daysAgo: number;
+    }[] = [
+      {
+        estadoNuevo: EstadoAlerta.ABIERTA,
+        userId: alerta.reportadoPor,
+        daysAgo: Math.max(1, Math.round((Date.now() - alerta.fecha.getTime()) / 86400000) + 1),
+      },
+    ];
+
+    if (alerta.estado === EstadoAlerta.EN_REVISION) {
+      entries.push({
+        estadoAnterior: EstadoAlerta.ABIERTA,
+        estadoNuevo: EstadoAlerta.EN_REVISION,
+        userId: tecnico.id,
+        daysAgo: 2,
+      });
+    }
+
+    if (alerta.estado === EstadoAlerta.RESUELTA) {
+      entries.push(
+        {
+          estadoAnterior: EstadoAlerta.ABIERTA,
+          estadoNuevo: EstadoAlerta.EN_REVISION,
+          userId: tecnico.id,
+          daysAgo: 14,
+        },
+        {
+          estadoAnterior: EstadoAlerta.EN_REVISION,
+          estadoNuevo: EstadoAlerta.RESUELTA,
+          userId: admin.id,
+          daysAgo: 12,
+        }
+      );
+    }
+
+    await seedHistorialAlerta(alerta.id, entries);
+  }
 
   console.log("Seed completado:");
   console.log("- Usuarios demo: admin / tecnico / encargado @smartbreeze.local");

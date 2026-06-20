@@ -26,6 +26,13 @@ export type AlertaRow = {
   equipoCodigo: string;
   ubicacion: string;
   reportadoPor: string;
+  historialEstados: {
+    id: string;
+    estadoAnterior: EstadoAlerta | null;
+    estadoNuevo: EstadoAlerta;
+    cambiadoPor: string;
+    fechaLabel: string;
+  }[];
 };
 
 type AlertasFiltro = "abiertas" | "en_revision" | "resueltas" | "todas";
@@ -153,6 +160,29 @@ export function AlertasWorkspace({
                     <p className="mt-2 text-xs text-gray-400">
                       Reportado por {alerta.reportadoPor} — {alerta.fechaLabel}
                     </p>
+
+                    {alerta.historialEstados.length > 0 ? (
+                      <div className="mt-3 rounded-md border border-gray-100 bg-gray-50/80 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Historial de estados
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                          {alerta.historialEstados.map((entry) => (
+                            <li key={entry.id} className="text-xs text-gray-600">
+                              <span className="font-medium text-gray-800">
+                                {entry.estadoAnterior
+                                  ? `${estadoAlertaLabels[entry.estadoAnterior]} → ${estadoAlertaLabels[entry.estadoNuevo]}`
+                                  : `Reporte · ${estadoAlertaLabels[entry.estadoNuevo]}`}
+                              </span>
+                              <span className="text-gray-400"> · {entry.fechaLabel}</span>
+                              <br />
+                              {entry.estadoAnterior ? "Cambio por" : "Reportado por"}:{" "}
+                              <span className="font-medium text-gray-700">{entry.cambiadoPor}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-col items-start gap-3 sm:items-end">

@@ -5,12 +5,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NuevoEquipoForm } from "@/components/equipos/nuevo-equipo-form";
 import { requireModule } from "@/lib/auth";
-import { canCreateCatalog } from "@/lib/permissions";
+import { canCreateEquipo } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 export default async function NuevoEquipoPage() {
   const user = await requireModule("equipos");
-  if (!canCreateCatalog(user.rol)) redirect("/equipos");
+  if (!canCreateEquipo(user.rol)) redirect("/equipos");
 
   const [ubicaciones, tecnicos] = await Promise.all([
     prisma.ubicacion.findMany({ orderBy: [{ facultad: "asc" }, { edificio: "asc" }] }),

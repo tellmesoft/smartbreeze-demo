@@ -16,6 +16,7 @@ import { tipoRepuestoLabels } from "@/lib/repuestos";
 import {
   formatCurrency,
   needsRestock,
+  suggestedPedidoQty,
 } from "@/lib/repuestos";
 import { chipActive, chipInactive, listItemBase, listItemSelected, tabActive, tabInactive } from "@/lib/selection-styles";
 import { base64ToDataUrl, cn } from "@/lib/utils";
@@ -45,16 +46,18 @@ export type RepuestoRow = {
   } | null;
   movimientos: {
     id: string;
-    tipo: "ENTRADA" | "SALIDA" | "AJUSTE";
+    tipo: "ENTRADA" | "SALIDA" | "AJUSTE" | "PEDIDO";
     cantidad: number;
     cantidadResultante: number;
     observaciones: string | null;
     fechaLabel: string;
+    registradoPor: string | null;
   }[];
 };
 
 type Props = {
   items: RepuestoRow[];
+  stockMinimo: number;
   userRol: "ADMINISTRADOR" | "TECNICO";
   selectedId?: string;
 };
@@ -62,12 +65,13 @@ type Props = {
 type Filtro = "todos" | "reabastecer";
 
 const movimientoLabels = {
-  ENTRADA: "Entrada",
+  ENTRADA: "Ingreso en bodega",
   SALIDA: "Salida",
   AJUSTE: "Ajuste",
+  PEDIDO: "Pedido",
 } as const;
 
-export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
+export function RepuestosWorkspace({ items, stockMinimo, userRol, selectedId }: Props) {
   const { isPending: isNavigating, push, refresh } = usePendingRouter();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -75,16 +79,19 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
   const [query, setQuery] = useState("");
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [detailTab, setDetailTab] = useState<"detalle" | "historial">("detalle");
-  const [restockOpen, setRestockOpen] = useState(false);
-  const [restockQty, setRestockQty] = useState("1");
-  const [restockError, setRestockError] = useState("");
+  const [pedirOpen, setPedirOpen] = useState(false);
+  const [ingresoOpen, setIngresoOpen] = useState(false);
+  const [pedirQty, setPedirQty] = useState("1");
+  const [ingresoQty, setIngresoQty] = useState("1");
+  const [pedirError, setPedirError] = useState("");
+  const [ingresoError, setIngresoError] = useState("");
 
   const urlSelectedId = searchParams.get("id") ?? selectedId;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter((item) => {
-      if (filtro === "reabastecer" && !needsRestock(item.cantidadDisponible, item.cantidadMinima)) {
+      if (filtro === "reabastecer" && !needsRestock(item.cantidadDisponible, stockMinimo)) {
         return false;
       }
       if (!q) return true;
@@ -95,7 +102,7 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
         item.equipo?.nombre.toLowerCase().includes(q)
       );
     });
-  }, [filtro, items, query]);
+  }, [filtro, items, query, stockMinimo]);
 
   const selected =
     filtered.find((item) => item.id === urlSelectedId) ??
@@ -117,28 +124,68 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
     setDetailTab("detalle");
   }
 
-  async function handleRestock() {
+  function openPedirModal() {
     if (!selected) return;
-    const cantidad = Number(restockQty);
+    setPedirQty(
+      String(suggestedPedidoQty(selected.cantidadDisponible, stockMinimo))
+    );
+    setPedirError("");
+    setPedirOpen(true);
+  }
+
+  function openIngresoModal() {
+    if (!selected) return;
+    setIngresoQty(String(selected.cantidadPedida > 0 ? selected.cantidadPedida : 1));
+    setIngresoError("");
+    setIngresoOpen(true);
+  }
+
+  async function handlePedir() {
+    if (!selected) return;
+    const cantidad = Number(pedirQty);
     if (!cantidad || Number.isNaN(cantidad) || cantidad <= 0) {
-      setRestockError("Indicá una cantidad válida.");
+      setPedirError("Indicá una cantidad válida.");
       return;
     }
 
-    setRestockError("");
+    setPedirError("");
     startTransition(async () => {
-      const res = await fetch(`/api/repuestos/${selected.id}/restock`, {
+      const res = await fetch(`/api/repuestos/${selected.id}/pedir`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cantidad }),
       });
       if (!res.ok) {
         const data = await res.json();
-        setRestockError(data.error ?? "No se pudo reabastecer.");
+        setPedirError(data.error ?? "No se pudo registrar el pedido.");
         return;
       }
-      setRestockOpen(false);
-      setRestockQty("1");
+      setPedirOpen(false);
+      refresh();
+    });
+  }
+
+  async function handleIngreso() {
+    if (!selected) return;
+    const cantidad = Number(ingresoQty);
+    if (!cantidad || Number.isNaN(cantidad) || cantidad <= 0) {
+      setIngresoError("Indicá una cantidad válida.");
+      return;
+    }
+
+    setIngresoError("");
+    startTransition(async () => {
+      const res = await fetch(`/api/repuestos/${selected.id}/ingreso`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cantidad }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setIngresoError(data.error ?? "No se pudo confirmar el ingreso.");
+        return;
+      }
+      setIngresoOpen(false);
       refresh();
     });
   }
@@ -179,7 +226,7 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
             ) : (
               filtered.map((item) => {
                 const foto = base64ToDataUrl(item.fotoBase64);
-                const bajoStock = needsRestock(item.cantidadDisponible, item.cantidadMinima);
+                const bajoStock = needsRestock(item.cantidadDisponible, stockMinimo);
                 return (
                   <button
                     key={item.id}
@@ -237,9 +284,16 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(userRol === "ADMINISTRADOR" || userRol === "TECNICO") && (
-                      <Button size="sm" onClick={() => setRestockOpen(true)}>
-                        + Reabastecer
-                      </Button>
+                      <>
+                        <Button size="sm" onClick={openPedirModal}>
+                          + Reabastecer
+                        </Button>
+                        {selected.cantidadPedida > 0 ? (
+                          <Button size="sm" variant="outline" onClick={openIngresoModal}>
+                            Confirmar ingreso
+                          </Button>
+                        ) : null}
+                      </>
                     )}
                   </div>
                 </div>
@@ -247,7 +301,7 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                 <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <Metric
                     label="Stock mínimo"
-                    value={`${selected.cantidadMinima} u.`}
+                    value={`${stockMinimo} u.`}
                   />
                   <Metric
                     label="Costo unitario"
@@ -256,7 +310,7 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                   <Metric
                     label="Disponible"
                     value={`${selected.cantidadDisponible} u.`}
-                    highlight={needsRestock(selected.cantidadDisponible, selected.cantidadMinima)}
+                    highlight={needsRestock(selected.cantidadDisponible, stockMinimo)}
                   />
                   <Metric label="Pedido" value={`${selected.cantidadPedida} u.`} />
                 </div>
@@ -277,8 +331,11 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="neutral">{tipoRepuestoLabels[selected.tipo]}</Badge>
-                      {needsRestock(selected.cantidadDisponible, selected.cantidadMinima) ? (
+                      {needsRestock(selected.cantidadDisponible, stockMinimo) ? (
                         <Badge variant="danger">Requiere reabastecimiento</Badge>
+                      ) : null}
+                      {selected.cantidadPedida > 0 ? (
+                        <Badge variant="warning">Pedido pendiente</Badge>
                       ) : null}
                     </div>
 
@@ -360,8 +417,16 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
                             <span className="text-xs text-gray-400">{mov.fechaLabel}</span>
                           </div>
                           <p className="mt-1 text-gray-600">
-                            Stock resultante: {mov.cantidadResultante} u.
+                            {mov.tipo === "PEDIDO"
+                              ? `Pedido pendiente: ${mov.cantidadResultante} u.`
+                              : `Stock disponible: ${mov.cantidadResultante} u.`}
                           </p>
+                          {mov.registradoPor ? (
+                            <p className="mt-1 text-gray-600">
+                              {mov.tipo === "PEDIDO" ? "Pedido por" : "Registrado por"}:{" "}
+                              <span className="font-medium text-gray-800">{mov.registradoPor}</span>
+                            </p>
+                          ) : null}
                           {mov.observaciones ? (
                             <p className="mt-1 text-gray-500">{mov.observaciones}</p>
                           ) : null}
@@ -376,50 +441,121 @@ export function RepuestosWorkspace({ items, userRol, selectedId }: Props) {
         </Card>
       </div>
 
-      {restockOpen && selected ? (
+      {pedirOpen && selected ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="restock-title"
+          aria-labelledby="pedir-title"
         >
           <Card className="w-full max-w-md shadow-xl">
             <CardContent className="py-6">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <h3 id="restock-title" className="text-lg font-semibold text-gray-900">
+                  <h3 id="pedir-title" className="text-lg font-semibold text-gray-900">
                     Reabastecer stock
                   </h3>
                   <p className="text-sm text-gray-500">{selected.nombre}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Registrá el pedido al proveedor. El stock disponible sube cuando confirmás el
+                    ingreso en bodega.
+                  </p>
                 </div>
                 <button
                   type="button"
                   className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                   aria-label="Cerrar"
-                  onClick={() => setRestockOpen(false)}
+                  onClick={() => setPedirOpen(false)}
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="restock-qty">Cantidad a ingresar</Label>
+                <Label htmlFor="pedir-qty">Cantidad a pedir</Label>
                 <Input
-                  id="restock-qty"
+                  id="pedir-qty"
                   type="number"
                   min={1}
-                  value={restockQty}
-                  onChange={(e) => setRestockQty(e.target.value)}
+                  value={pedirQty}
+                  onChange={(e) => setPedirQty(e.target.value)}
                 />
               </div>
 
-              {restockError ? <p className="mt-3 text-sm text-red-600">{restockError}</p> : null}
+              {pedirError ? <p className="mt-3 text-sm text-red-600">{pedirError}</p> : null}
 
               <div className="mt-5 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setRestockOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setPedirOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="button" disabled={pending} loading={pending} loadingText="Guardando..." onClick={handleRestock}>
+                <Button
+                  type="button"
+                  disabled={pending}
+                  loading={pending}
+                  loadingText="Guardando..."
+                  onClick={handlePedir}
+                >
+                  Confirmar pedido
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {ingresoOpen && selected ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ingreso-title"
+        >
+          <Card className="w-full max-w-md shadow-xl">
+            <CardContent className="py-6">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h3 id="ingreso-title" className="text-lg font-semibold text-gray-900">
+                    Confirmar ingreso
+                  </h3>
+                  <p className="text-sm text-gray-500">{selected.nombre}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Pedido pendiente: {selected.cantidadPedida} u.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Cerrar"
+                  onClick={() => setIngresoOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ingreso-qty">Cantidad recibida en bodega</Label>
+                <Input
+                  id="ingreso-qty"
+                  type="number"
+                  min={1}
+                  value={ingresoQty}
+                  onChange={(e) => setIngresoQty(e.target.value)}
+                />
+              </div>
+
+              {ingresoError ? <p className="mt-3 text-sm text-red-600">{ingresoError}</p> : null}
+
+              <div className="mt-5 flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIngresoOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  disabled={pending}
+                  loading={pending}
+                  loadingText="Guardando..."
+                  onClick={handleIngreso}
+                >
                   Confirmar ingreso
                 </Button>
               </div>

@@ -28,6 +28,10 @@ export default async function AlertasPage({ searchParams }: Props) {
       include: {
         equipo: { include: { ubicacion: true } },
         usuario: true,
+        historialEstados: {
+          orderBy: { fecha: "desc" },
+          include: { cambiadoPor: { select: { nombre: true } } },
+        },
       },
       orderBy: { fecha: "desc" },
     }),
@@ -54,6 +58,13 @@ export default async function AlertasPage({ searchParams }: Props) {
             equipoCodigo: a.equipo.codigoInterno,
             ubicacion: `${a.equipo.ubicacion.edificio} — ${a.equipo.ubicacion.nombre}`,
             reportadoPor: a.usuario.nombre,
+            historialEstados: a.historialEstados.map((h) => ({
+              id: h.id,
+              estadoAnterior: h.estadoAnterior,
+              estadoNuevo: h.estadoNuevo,
+              cambiadoPor: h.cambiadoPor.nombre,
+              fechaLabel: formatDateTime(h.fecha),
+            })),
           }))}
           equipos={equipos.map((e) => ({
             id: e.id,

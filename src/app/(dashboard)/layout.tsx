@@ -2,6 +2,8 @@ import { requireSession } from "@/lib/auth";
 import { isMedidorOverdue } from "@/lib/medidores";
 import { mantenimientosScopeForRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getStockMinimoRepuestos } from "@/lib/repuestos-config";
+import { needsRestock } from "@/lib/repuestos";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default async function DashboardLayout({
@@ -11,7 +13,8 @@ export default async function DashboardLayout({
 }) {
   const user = await requireSession();
 
-  const [mantenimientosPendientes, alertasAbiertas, repuestos, medidores] = await Promise.all([
+  const [mantenimientosPendientes, alertasAbiertas, repuestos, medidores, stockMinimoRepuestos] =
+    await Promise.all([
     prisma.mantenimiento.count({
       where: {
         estado: { in: ["PENDIENTE", "EN_PROGRESO", "EN_ESPERA"] },
@@ -24,15 +27,16 @@ export default async function DashboardLayout({
       },
     }),
     prisma.repuesto.findMany({
-      select: { cantidadDisponible: true, cantidadMinima: true },
+      select: { cantidadDisponible: true },
     }),
     prisma.medidor.findMany({
       select: { proximaLecturaAt: true },
     }),
+    getStockMinimoRepuestos(),
   ]);
 
-  const repuestosBajoStock = repuestos.filter(
-    (r) => r.cantidadDisponible <= r.cantidadMinima
+  const repuestosBajoStock = repuestos.filter((r) =>
+    needsRestock(r.cantidadDisponible, stockMinimoRepuestos)
   ).length;
 
   const medidoresVencidos = medidores.filter((m) =>

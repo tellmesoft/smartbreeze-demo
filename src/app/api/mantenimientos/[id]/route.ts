@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import type { EstadoMantenimiento } from "@/generated/prisma/client";
 import { requireSessionApi } from "@/lib/auth";
+import { esRegresionDesdeCompletado } from "@/lib/mantenimientos";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
@@ -33,15 +34,41 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
-  const fechaRealizada =
-    estado === "COMPLETADO" ? mantenimiento.fechaRealizada ?? new Date() : mantenimiento.fechaRealizada;
+  if (estado === mantenimiento.estado) {
+    return NextResponse.json({
+      id: mantenimiento.id,
+      estado: mantenimiento.estado,
+      sinCambios: true,
+    });
+  }
 
-  const updated = await prisma.mantenimiento.update({
-    where: { id },
-    data: {
-      estado,
-      fechaRealizada,
-    },
+  const estadoAnterior = mantenimiento.estado;
+  const regresionDesdeCompletado = esRegresionDesdeCompletado(estadoAnterior, estado);
+
+  const fechaRealizada =
+    estado === "COMPLETADO"
+      ? mantenimiento.fechaRealizada ?? new Date()
+      : mantenimiento.fechaRealizada;
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.mantenimiento.update({
+      where: { id },
+      data: {
+        estado,
+        fechaRealizada,
+      },
+    });
+
+    await tx.historialEstadoMantenimiento.create({
+      data: {
+        mantenimientoId: id,
+        estadoAnterior,
+        estadoNuevo: estado,
+        cambiadoPorId: user.id,
+      },
+    });
+
+    return row;
   });
 
   if (estado === "COMPLETADO" && mantenimiento.proximaMantenimiento) {
@@ -57,5 +84,10 @@ export async function PATCH(request: Request, { params }: Params) {
   revalidatePath("/mantenimientos");
   revalidatePath("/dashboard");
 
-  return NextResponse.json({ id: updated.id, estado: updated.estado });
+  return NextResponse.json({
+    id: updated.id,
+    estado: updated.estado,
+    estadoAnterior,
+    regresionDesdeCompletado,
+  });
 }

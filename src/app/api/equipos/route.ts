@@ -12,7 +12,7 @@ import {
 } from "@/lib/equipos";
 
 export async function POST(request: Request) {
-  const user = await requireSessionApi(["ADMINISTRADOR"]);
+  const user = await requireSessionApi(["ADMINISTRADOR", "TECNICO"]);
   if (!user) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }

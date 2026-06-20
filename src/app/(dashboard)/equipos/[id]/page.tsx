@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { PendingNavButton, PendingNavTextLink } from "@/components/navigation/pending-nav";
+import { PendingNavTextLink } from "@/components/navigation/pending-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireModule } from "@/lib/auth";
@@ -67,18 +67,9 @@ export default async function EquipoDetailPage({ params }: Props) {
       <PageHeader
         title={equipo.nombre}
         action={
-          <div className="flex gap-2">
-            <Badge variant={estadoEquipoVariant(equipo.estado)}>
-              {estadoEquipoLabels[equipo.estado]}
-            </Badge>
-            <PendingNavButton
-              href={`/consulta-qr?codigo=${equipo.codigoQr}&autostart=1`}
-              variant="outline"
-              loadingText="Abriendo..."
-            >
-              Escanear QR (simulación)
-            </PendingNavButton>
-          </div>
+          <Badge variant={estadoEquipoVariant(equipo.estado)}>
+            {estadoEquipoLabels[equipo.estado]}
+          </Badge>
         }
       />
 

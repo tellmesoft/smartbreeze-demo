@@ -25,13 +25,40 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "No encontrada." }, { status: 404 });
   }
 
-  const updated = await prisma.alerta.update({
-    where: { id },
-    data: { estado },
+  if (estado === alerta.estado) {
+    return NextResponse.json({
+      id: alerta.id,
+      estado: alerta.estado,
+      sinCambios: true,
+    });
+  }
+
+  const estadoAnterior = alerta.estado;
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.alerta.update({
+      where: { id },
+      data: { estado },
+    });
+
+    await tx.historialEstadoAlerta.create({
+      data: {
+        alertaId: id,
+        estadoAnterior,
+        estadoNuevo: estado,
+        cambiadoPorId: user.id,
+      },
+    });
+
+    return row;
   });
 
   revalidatePath("/alertas");
   revalidatePath("/dashboard");
 
-  return NextResponse.json({ id: updated.id, estado: updated.estado });
+  return NextResponse.json({
+    id: updated.id,
+    estado: updated.estado,
+    estadoAnterior,
+  });
 }

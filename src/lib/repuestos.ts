@@ -30,6 +30,10 @@ export function needsRestock(cantidadDisponible: number, cantidadMinima: number)
   return cantidadDisponible <= cantidadMinima;
 }
 
+export function suggestedPedidoQty(cantidadDisponible: number, cantidadMinima: number) {
+  return Math.max(1, cantidadMinima - cantidadDisponible);
+}
+
 export function formatCurrency(value: number | null | undefined) {
   if (value == null) return "—";
   return new Intl.NumberFormat("es-CL", {

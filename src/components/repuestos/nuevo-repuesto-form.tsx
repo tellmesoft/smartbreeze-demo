@@ -19,6 +19,7 @@ export type ProveedorOption = {
 type NuevoRepuestoFormProps = {
   equipos: EquipoOption[];
   proveedores: ProveedorOption[];
+  stockMinimo: number;
   onSuccess: (id: string) => void;
   onCancel: () => void;
 };
@@ -26,6 +27,7 @@ type NuevoRepuestoFormProps = {
 export function NuevoRepuestoForm({
   equipos,
   proveedores,
+  stockMinimo,
   onSuccess,
   onCancel,
 }: NuevoRepuestoFormProps) {
@@ -41,7 +43,6 @@ export function NuevoRepuestoForm({
     const payload = {
       nombre: form.get("nombre"),
       tipo: form.get("tipo"),
-      cantidadMinima: form.get("cantidadMinima"),
       cantidadDisponible: form.get("cantidadDisponible"),
       costoUnitario: form.get("costoUnitario") || null,
       proveedorId: form.get("proveedorId") || null,
@@ -97,19 +98,22 @@ export function NuevoRepuestoForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="cantidadDisponible">Stock inicial</Label>
           <Input id="cantidadDisponible" name="cantidadDisponible" type="number" min={0} defaultValue={0} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="cantidadMinima">Stock mínimo</Label>
-          <Input id="cantidadMinima" name="cantidadMinima" type="number" min={0} defaultValue={1} />
+          <Label>Stock mínimo pautado</Label>
+          <p className="flex h-10 items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
+            {stockMinimo} u.
+          </p>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="costoUnitario">Costo unitario (CLP)</Label>
-          <Input id="costoUnitario" name="costoUnitario" type="number" min={0} placeholder="Ej. 18500" />
-        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="costoUnitario">Costo unitario (CLP)</Label>
+        <Input id="costoUnitario" name="costoUnitario" type="number" min={0} placeholder="Ej. 18500" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

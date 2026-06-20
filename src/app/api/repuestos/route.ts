@@ -9,10 +9,11 @@ import {
   repuestoFotoBase64,
   repuestoQrBase64,
 } from "@/lib/repuestos";
+import { getStockMinimoRepuestos } from "@/lib/repuestos-config";
 import { validateProveedorCross } from "@/lib/proveedores";
 
 export async function POST(request: Request) {
-  const user = await requireSessionApi(["ADMINISTRADOR"]);
+  const user = await requireSessionApi(["ADMINISTRADOR", "TECNICO"]);
   if (!user) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const nombre = String(body.nombre ?? "").trim();
     const tipo = (body.tipo ?? "OTRO") as TipoRepuesto;
-    const cantidadMinima = Number(body.cantidadMinima ?? 1);
+    const cantidadMinima = await getStockMinimoRepuestos();
     const cantidadDisponible = Number(body.cantidadDisponible ?? 0);
     const costoUnitario = body.costoUnitario ? Number(body.costoUnitario) : null;
     const proveedorId = body.proveedorId ? String(body.proveedorId).trim() : null;
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
         codigoInterno,
         nombre,
         tipo,
-        cantidadMinima: Number.isNaN(cantidadMinima) ? 1 : Math.max(0, cantidadMinima),
+        cantidadMinima,
         cantidadDisponible: Number.isNaN(cantidadDisponible) ? 0 : Math.max(0, cantidadDisponible),
         costoUnitario: costoUnitario && !Number.isNaN(costoUnitario) ? costoUnitario : null,
         proveedorId,

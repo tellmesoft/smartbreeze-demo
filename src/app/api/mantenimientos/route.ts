@@ -9,7 +9,7 @@ import {
 } from "@/lib/procedimientos";
 
 export async function POST(request: Request) {
-  const user = await requireSessionApi(["ADMINISTRADOR"]);
+  const user = await requireSessionApi(["ADMINISTRADOR", "TECNICO"]);
   if (!user) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
@@ -60,12 +60,19 @@ export async function POST(request: Request) {
         titulo,
         equipoId,
         tecnicoId,
+        creadoPorId: user.id,
         fechaProgramada,
         prioridad,
         observaciones,
         recurrencia,
         proximaMantenimiento,
         estado: "PENDIENTE",
+        historialEstados: {
+          create: {
+            estadoNuevo: "PENDIENTE",
+            cambiadoPorId: user.id,
+          },
+        },
       },
     });
 

@@ -43,9 +43,24 @@ export function rolesForModule(module: AppModule): Rol[] {
   return moduleRoles[module];
 }
 
-/** Acciones de creación / alta en catálogos (solo Admin). */
+/** Acciones de creación / alta en catálogos administrativos (solo Admin). */
 export function canCreateCatalog(rol: Rol): boolean {
   return rol === "ADMINISTRADOR";
+}
+
+/** Alta de equipos HVAC en catálogo operativo. */
+export function canCreateEquipo(rol: Rol): boolean {
+  return OPS.includes(rol);
+}
+
+/** Programar nuevo mantenimiento. */
+export function canCreateMantenimiento(rol: Rol): boolean {
+  return OPS.includes(rol);
+}
+
+/** Alta de repuestos en inventario. */
+export function canCreateRepuesto(rol: Rol): boolean {
+  return OPS.includes(rol);
 }
 
 /** Técnico: solo equipos donde es responsable asignado. */
@@ -68,7 +83,7 @@ export function canReportAlertas(rol: Rol): boolean {
   return ALL.includes(rol);
 }
 
-/** Reabastecer inventario de repuestos. */
+/** Pedir reabastecimiento y confirmar ingreso de repuestos. */
 export function canRestockRepuestos(rol: Rol): boolean {
   return OPS.includes(rol);
 }

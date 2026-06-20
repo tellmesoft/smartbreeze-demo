@@ -14,9 +14,10 @@ import {
 type Props = {
   equipos: EquipoOption[];
   proveedores: ProveedorOption[];
+  stockMinimo: number;
 };
 
-export function NuevoRepuestoButton({ equipos, proveedores }: Props) {
+export function NuevoRepuestoButton({ equipos, proveedores, stockMinimo }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -55,6 +56,7 @@ export function NuevoRepuestoButton({ equipos, proveedores }: Props) {
               <NuevoRepuestoForm
                 equipos={equipos}
                 proveedores={proveedores}
+                stockMinimo={stockMinimo}
                 onSuccess={handleSuccess}
                 onCancel={() => setOpen(false)}
               />

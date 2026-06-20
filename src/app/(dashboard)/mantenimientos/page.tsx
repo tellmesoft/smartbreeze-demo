@@ -7,7 +7,8 @@ import {
 } from "@/components/mantenimientos/mantenimientos-workspace";
 import { MasterDetailPageSkeleton } from "@/components/ui/loading";
 import { requireModule } from "@/lib/auth";
-import { canCreateCatalog, mantenimientosScopeForRole } from "@/lib/permissions";
+import { canCreateMantenimiento, mantenimientosScopeForRole } from "@/lib/permissions";
+import { mantenimientoFueCompletadoAntes } from "@/lib/mantenimientos";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
@@ -20,27 +21,34 @@ export default async function MantenimientosPage({ searchParams }: Props) {
   const params = await searchParams;
   const tab = params.tab === "realizados" ? "realizados" : "pendientes";
 
+  const canCreate = canCreateMantenimiento(user.rol);
+
   const [mantenimientos, equipos, tecnicos, procedimientosCatalogo] = await Promise.all([
     prisma.mantenimiento.findMany({
       where: mantenimientosScopeForRole(user.rol, user.id),
       include: {
         equipo: { include: { ubicacion: true } },
         tecnico: true,
+        creadoPor: true,
         proveedor: true,
         parametrosHvac: true,
         esterilizacion: true,
         procedimiento: { include: { items: { orderBy: { orden: "asc" } } } },
         respuestasProcedimiento: true,
+        historialEstados: {
+          orderBy: { fecha: "desc" },
+          include: { cambiadoPor: { select: { nombre: true } } },
+        },
       },
       orderBy: { fechaProgramada: "asc" },
     }),
-    user.rol === "ADMINISTRADOR"
+    canCreate
       ? prisma.equipo.findMany({
           include: { ubicacion: true },
           orderBy: { codigoInterno: "asc" },
         })
       : Promise.resolve([]),
-    user.rol === "ADMINISTRADOR"
+    canCreate
       ? prisma.usuario.findMany({ where: { rol: "TECNICO" }, orderBy: { nombre: "asc" } })
       : Promise.resolve([]),
     prisma.procedimiento.findMany({
@@ -74,6 +82,15 @@ export default async function MantenimientosPage({ searchParams }: Props) {
     recurrencia: m.recurrencia,
     tecnicoId: m.tecnicoId,
     tecnicoNombre: m.tecnico.nombre,
+    creadoPorNombre: m.creadoPor?.nombre ?? null,
+    fueCompletadoAntes: mantenimientoFueCompletadoAntes(m.historialEstados, m.estado),
+    historialEstados: m.historialEstados.map((h) => ({
+      id: h.id,
+      estadoAnterior: h.estadoAnterior,
+      estadoNuevo: h.estadoNuevo,
+      cambiadoPor: h.cambiadoPor.nombre,
+      fechaLabel: formatDateTime(h.fecha),
+    })),
     proveedor: m.proveedor
       ? { id: m.proveedor.id, nombre: m.proveedor.nombre }
       : null,
@@ -128,7 +145,7 @@ export default async function MantenimientosPage({ searchParams }: Props) {
       <PageHeader
         title="Mantenimientos"
         action={
-          canCreateCatalog(user.rol) ? (
+          canCreate ? (
             <NuevoMantenimientoButton
               equipos={equipos.map((e) => ({
                 id: e.id,
