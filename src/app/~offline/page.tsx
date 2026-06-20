@@ -4,7 +4,7 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 export default function OfflinePage() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#f8fafc] p-6 text-center">
-      <BrandLogo link={false} variant="mark" className="mb-6 h-16 w-16" />
+      <BrandLogo link={false} variant="full" className="mx-auto mb-6 h-12 w-auto" />
       <h1 className="text-xl font-bold text-gray-900">Sin conexión</h1>
       <p className="mt-2 max-w-sm text-sm text-gray-600">
         No hay internet disponible. Revisá tu conexión e intentá de nuevo para acceder a Smartbreeze.

@@ -28,7 +28,7 @@ export function SidebarNav({ user, badges = {}, onNavigate }: SidebarNavProps) {
   const items = navItemsForRole(user.rol);
 
   return (
-    <nav className="flex-1 overflow-y-auto px-3 py-3">
+    <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
       {items.map((item, index) => {
         const Icon = item.icon;
         const badgeCount = item.badgeKey ? badges[item.badgeKey] : undefined;

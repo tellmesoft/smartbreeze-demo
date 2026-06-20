@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const demoAccounts = [
   { email: "admin@smartbreeze.local", label: "Administrador" },
@@ -42,16 +43,25 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {demoAccounts.map((account) => (
+        {demoAccounts.map((account) => {
+          const selected = email === account.email;
+          return (
           <button
             key={account.email}
             type="button"
+            aria-pressed={selected}
             onClick={() => setEmail(account.email)}
-            className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-blue-300 hover:text-blue-700"
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              selected
+                ? "border-[#2563EB] bg-blue-50 text-[#2563EB] ring-1 ring-[#2563EB]/20"
+                : "border-gray-200 text-gray-600 hover:border-blue-200 hover:text-blue-700"
+            )}
           >
             {account.label}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       <div className="space-y-2">

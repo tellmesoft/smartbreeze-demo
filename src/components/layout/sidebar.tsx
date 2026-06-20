@@ -24,7 +24,7 @@ export function Sidebar({ user, badges = {}, className, onNavigate }: SidebarPro
   return (
     <aside
       className={cn(
-        "flex h-screen shrink-0 flex-col border-r border-gray-200 bg-white",
+        "flex h-full max-h-[100dvh] shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white",
         className ?? "w-[252px]"
       )}
     >
