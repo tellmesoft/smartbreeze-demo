@@ -16,7 +16,7 @@ const defaultDemoEmail = demoAccounts[0].email;
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState(defaultDemoEmail);
+  const [email, setEmail] = useState<string>(defaultDemoEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
