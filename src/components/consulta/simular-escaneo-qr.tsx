@@ -47,7 +47,7 @@ export function SimularEscaneoQr({ equipos, initialCode, autoStart = false }: Pr
   function handleSelect(value: string) {
     setSelectedCode(value);
     if (!value || isRunning) return;
-    router.push(`/consulta/${value}`);
+    router.push(`/consulta-qr/${value}`);
   }
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export function SimularEscaneoQr({ equipos, initialCode, autoStart = false }: Pr
     timersRef.current.push(window.setTimeout(() => setStep("closing"), 3300));
     timersRef.current.push(
       window.setTimeout(() => {
-        router.push(`/consulta/${scanningCode}`);
+        router.push(`/consulta-qr/${scanningCode}`);
       }, 3600)
     );
 
