@@ -64,7 +64,7 @@ async function main() {
     data: {
       nombre: "María González",
       email: "admin@smartbreeze.local",
-      password: "sbi2026",
+      password: "00112233Abaca",
       rol: Rol.ADMINISTRADOR,
       avatarBase64: svgBase64("MG", "#2563eb", "#ffffff"),
     },
@@ -74,7 +74,7 @@ async function main() {
     data: {
       nombre: "Carlos Mendoza",
       email: "tecnico@smartbreeze.local",
-      password: "sbi2026",
+      password: "00112233Abaca",
       rol: Rol.TECNICO,
       avatarBase64: svgBase64("CM", "#059669", "#ffffff"),
     },
@@ -84,7 +84,7 @@ async function main() {
     data: {
       nombre: "Ana Ruiz",
       email: "encargado@smartbreeze.local",
-      password: "sbi2026",
+      password: "00112233Abaca",
       rol: Rol.ENCARGADO,
       avatarBase64: svgBase64("AR", "#d97706", "#ffffff"),
     },
